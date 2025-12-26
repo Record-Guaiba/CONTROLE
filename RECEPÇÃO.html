@@ -3,25 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sistema de gestão de ramais">
-    <meta name="keywords" content="ramais, funcionários, férias">
+    <meta name="description" content="Sistema completo de gestão empresarial">
+    <meta name="keywords" content="gestão, empresa, funcionários, ativos, ramais, férias">
     <meta name="author" content="Sistema de Gestão Integrada">
-    <title>Record - Ramais</title>
+    <title>Record</title>
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Bibliotecas para exportação -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Bibliotecas para exportação -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<!-- html2canvas para captura de tela -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- QR Code Library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+<!-- JSZip -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
     
     <style>
         :root {
@@ -757,12 +766,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Configuração do Supabase
-            const supabaseUrl = 'https://sptokglrqlhggjzrjrer.supabase.co';
-            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwdG9rZ2xycWxoZ2dqenJqcmVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0MjI4OTUsImV4cCI6MjA4MTk5ODg5NX0.M9tW5sLJgMeWhi8HNTTQIR1IqLFOJp9aBLrluUC_Efo';        
-        // Inicializar Supabase
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+// Configuração do Supabase
+const supabaseUrl = 'https://sptokglrqlhggjzrjrer.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwdG9rZ2xycWxoZ2dqenJqcmVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0MjI4OTUsImV4cCI6MjA4MTk5ODg5NX0.M9tW5sLJgMeWhi8HNTTQIR1IqLFOJp9aBLrluUC_Efo';
 
+// Inicializar Supabase - CORREÇÃO APLICADA
+let supabase;
+try {
+    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    console.log('Supabase inicializado com sucesso');
+} catch (error) {
+    console.error('Erro ao inicializar Supabase:', error);
+    showAlert('Erro ao conectar com o banco de dados. Verifique sua conexão.', 'error');
+}
         // Estado da aplicação
         const appState = {
             currentSection: 'extensions',
@@ -1333,5 +1349,3 @@
     </script>
 </body>
 </html>
-
-

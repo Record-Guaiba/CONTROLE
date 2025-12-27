@@ -8421,13 +8421,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         showAlert('Erro ao carregar o sistema. Verifique sua conexão.', 'error');
     }
 });
-                        // Modal de projetos - atualizar progresso automaticamente ao alterar status
+// Modal de projetos - atualizar progresso automaticamente ao alterar status
 const projectStatus = document.getElementById('projectStatus');
-if (projectStatus) {
+const progressSlider = document.getElementById('projectProgress');
+const progressValue = document.getElementById('projectProgressValue');
+
+if (projectStatus && progressSlider && progressValue) {
+    // Evento para alterar o progresso quando o status muda
     projectStatus.addEventListener('change', function() {
-        const progressSlider = document.getElementById('projectProgress');
-        const progressValue = document.getElementById('projectProgressValue');
-        
         if (this.value === 'Em Andamento') {
             progressSlider.value = 1;
             progressValue.textContent = '1%';
@@ -8439,6 +8440,17 @@ if (projectStatus) {
             progressValue.textContent = '100%';
         }
     });
+
+    // Evento para atualizar o texto do valor do progresso e ajustar status se for 100%
+    progressSlider.addEventListener('input', function() {
+        // Atualiza o texto do valor
+        progressValue.textContent = this.value + '%';
+
+        // Se o progresso for 100%, altera o status para "Concluído"
+        if (this.value == 100) {
+            projectStatus.value = 'Concluído';
+        }
+    });
 }
 document.getElementById('logoutButton').addEventListener('click', function() {
 // Aqui, em um sistema real, faríamos logout (limpar token, etc.) e redirecionar para a página de login.
@@ -8448,3 +8460,4 @@ window.location.reload();
     </script>
 </body>
 </html>
+

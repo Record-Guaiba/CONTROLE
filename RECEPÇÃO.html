@@ -650,12 +650,6 @@
             padding-left: 40px;
         }
 
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-        }
-
         .required-field::after {
             content: " *";
             color: #dc3545;
@@ -695,6 +689,11 @@
             color: #f39c12;
             font-size: 1.2rem;
         }
+
+        /* Ocultar colunas de ID, Status e Ações */
+        .col-id, .col-status, .col-actions {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -733,7 +732,6 @@
                 <!-- Ramais Section -->
                 <section id="extensionsSection" class="section active">
                     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                        <h2 class="section-title">Ramais</h2>
                         <div>
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExtensionModal">
                                 <i class="fas fa-plus"></i> Novo Ramal
@@ -757,14 +755,13 @@
                                 <table class="table table-hover" id="extensionsTable">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                            <th class="col-id">ID</th>
                                             <th>Ramal</th>
                                             <th>Responsável</th>
                                             <th>Ramal Compartilhado</th>
                                             <th>Departamento</th>
-                                            <th>Status</th>
+                                            <th class="col-status">Status</th>
                                             <th>Férias</th>
-                                            <th>Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody id="extensionsTableBody"></tbody>
@@ -1106,7 +1103,7 @@
     }
 
     // =============================================
-    // ATUALIZAÇÃO DA TABELA DE RAMAIS
+    // ATUALIZAÇÃO DA TABELA DE RAMAIS (SEM ID, STATUS E AÇÕES)
     // =============================================
     function updateExtensionsTable() {
         const tbody = document.getElementById('extensionsTableBody');
@@ -1115,7 +1112,7 @@
         tbody.innerHTML = '';
 
         if (appState.extensions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhum ramal cadastrado</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum ramal cadastrado</td></tr>';
             return;
         }
 
@@ -1149,24 +1146,14 @@
 
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>#EXT-${extension.id.toString().padStart(3, '0')}</td>
                 <td>${extension.number || 'N/A'}</td>
                 <td>${extension.employeeName}</td>
                 <td>${sharedEmployeesText}</td>
                 <td>${extension.department}</td>
-                <td><span class="status-badge ${getStatusClass(extension.status)}">${extension.status}</span></td>
                 <td>
                     ${extension.isOnVacation ?
                         '<i class="fas fa-umbrella-beach vacation-indicator" title="Em férias"></i>' :
                         ''}
-                </td>
-                <td class="action-buttons">
-                    <button class="btn btn-sm btn-outline-primary" onclick="editExtension(${extension.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteExtension(${extension.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
                 </td>
             `;
             tbody.appendChild(row);
@@ -1290,12 +1277,11 @@
     }
 
     // =============================================
-    // EVENT LISTENERS DE EXPORTAÇÃO - CORRIGIDO
+    // EVENT LISTENERS DE EXPORTAÇÃO
     // =============================================
     function setupExportEventListeners() {
         const exportExtensionsPDFBtn = document.getElementById('exportExtensionsPDF');
         if (exportExtensionsPDFBtn) {
-            // Remove todos os listeners antigos clonando
             const newPdfBtn = exportExtensionsPDFBtn.cloneNode(true);
             exportExtensionsPDFBtn.parentNode.replaceChild(newPdfBtn, exportExtensionsPDFBtn);
             
@@ -1329,7 +1315,7 @@
     }
 
     // =============================================
-    // FUNÇÕES CRUD - RAMAIS
+    // FUNÇÕES CRUD - RAMAIS (APENAS ADICIONAR)
     // =============================================
     async function saveExtension() {
         const form = document.getElementById('extensionForm');
@@ -1343,33 +1329,21 @@
             employee_id: document.getElementById('extensionEmployee').value || null,
             shared_employees: document.getElementById('extensionShared').value,
             status: document.getElementById('extensionStatus').value,
+            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };
 
         try {
-            let result;
-
-            if (appState.currentEditingId) {
-                result = await supabase
-                    .from('extensions')
-                    .update(extensionData)
-                    .eq('id', appState.currentEditingId);
-            } else {
-                extensionData.created_at = new Date().toISOString();
-                result = await supabase
-                    .from('extensions')
-                    .insert([extensionData]);
-            }
+            const result = await supabase
+                .from('extensions')
+                .insert([extensionData]);
 
             if (result.error) throw result.error;
 
             bootstrap.Modal.getInstance(document.getElementById('addExtensionModal')).hide();
             await loadAllData();
 
-            showAlert(
-                appState.currentEditingId ? 'Ramal atualizado com sucesso!' : 'Ramal adicionado com sucesso!',
-                'success'
-            );
+            showAlert('Ramal adicionado com sucesso!', 'success');
 
         } catch (error) {
             console.error('Erro ao salvar ramal:', error);
@@ -1377,42 +1351,8 @@
         }
     }
 
-    function editExtension(id) {
-        const extension = appState.extensions.find(ext => ext.id === id);
-        if (!extension) return;
-
-        appState.currentEditingId = id;
-
-        document.getElementById('extensionNumber').value = extension.number;
-        document.getElementById('extensionEmployee').value = extension.employee_id || '';
-        document.getElementById('extensionShared').value = extension.shared_employees;
-        document.getElementById('extensionStatus').value = extension.status;
-
-        const modal = new bootstrap.Modal(document.getElementById('addExtensionModal'));
-        modal.show();
-    }
-
-    async function deleteExtension(id) {
-        if (!confirm('Tem certeza que deseja excluir este ramal?')) return;
-
-        try {
-            const { error } = await supabase
-                .from('extensions')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-
-            await loadAllData();
-            showAlert('Ramal excluído com sucesso!', 'success');
-        } catch (error) {
-            console.error('Erro ao excluir ramal:', error);
-            showAlert('Erro ao excluir ramal: ' + error.message, 'error');
-        }
-    }
-
     // =============================================
-    // EXPORTAÇÃO DE RAMAIS PDF - IGUAL AO GESTÃO
+    // EXPORTAÇÃO DE RAMAIS PDF
     // =============================================
     function exportExtensionsPDF() {
         if (appState.isExporting) return;

@@ -369,7 +369,7 @@
             padding: 12px 15px;
             border-top: 1px solid #dee2e6;
             font-size: 0.9rem;
-            text-align: center;
+            text-align: left;
             vertical-align: middle;
         }
 
@@ -377,7 +377,7 @@
             padding: 12px 15px;
             vertical-align: middle;
             font-size: 0.9rem;
-            text-align: center;
+            text-align: left;
         }
 
         .table-hover tbody tr {
@@ -488,6 +488,13 @@
         .col-name {
             font-weight: 600;
             color: var(--dark-text);
+        }
+
+        .col-ramal {
+            text-align: left;
+        }
+
+        .col-ferias {
             text-align: left;
         }
 
@@ -621,11 +628,11 @@
                                 <table class="table table-hover" id="employeesTable">
                                     <thead>
                                         <tr>
-                                            <th style="text-align: left;">Nome</th>
-                                            <th>Cargo</th>
-                                            <th>Departamento</th>
-                                            <th style="text-align: center;">Ramal</th>
-                                            <th style="text-align: center; width: 80px;">Férias</th>
+                                            <th style="width: 30%;">Nome</th>
+                                            <th style="width: 20%;">Cargo</th>
+                                            <th style="width: 25%;">Departamento</th>
+                                            <th style="width: 15%;">Ramal</th>
+                                            <th style="width: 10%;">Férias</th>
                                         </tr>
                                     </thead>
                                     <tbody id="employeesTableBody"></tbody>
@@ -1015,8 +1022,8 @@
                     <td class="col-name">${emp.name}</td>
                     <td>${emp.position || '-'}</td>
                     <td>${emp.department || '-'}</td>
-                    <td style="text-align: center;">${ramalHtml}</td>
-                    <td style="text-align: center;">${feriasHtml}</td>
+                    <td class="col-ramal">${ramalHtml}</td>
+                    <td class="col-ferias">${feriasHtml}</td>
                 </tr>
             `;
         });

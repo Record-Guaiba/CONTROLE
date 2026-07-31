@@ -2718,11 +2718,82 @@
     };
 
     // =============================================
-    // ALERTAS DE FÉRIAS
+    // ALERTAS DE FÉRIAS - MODIFICADO COM AUTO-VERIFICAÇÃO
     // =============================================
     const vacationAlerts = {
         alerts: [],
         isModalOpen: false,
+        hasShownInitialAlert: false, // Nova flag para controlar o alerta inicial
+
+        // Verifica se a férias está ativa (não vencida e não concluída)
+        isVacationActive: function(vacation) {
+            if (vacation.status === 'Concluído') {
+                return false;
+            }
+            
+            if (vacation.status === 'Cancelado') {
+                return false;
+            }
+
+            // Verifica se já passou 1 dia do término
+            const endDate = new Date(vacation.end_date);
+            endDate.setHours(0, 0, 0, 0);
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Se já passou 1 dia do término, não é mais ativa
+            const daysAfterEnd = Math.floor((today - endDate) / (1000 * 60 * 60 * 24));
+            if (daysAfterEnd >= 1) {
+                return false;
+            }
+
+            return true;
+        },
+
+        // Verifica se deve mostrar alerta de retorno
+        shouldShowReturnAlert: function(vacation) {
+            if (!this.isVacationActive(vacation)) {
+                return false;
+            }
+
+            if (vacation.status !== 'Em Andamento') {
+                return false;
+            }
+
+            const endDate = new Date(vacation.end_date);
+            endDate.setHours(0, 0, 0, 0);
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const daysUntilReturn = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+            
+            // Mostra alerta apenas se faltam 7 dias ou menos e ainda não venceu
+            return daysUntilReturn >= 0 && daysUntilReturn <= 7;
+        },
+
+        // Verifica se deve mostrar alerta de bloqueio
+        shouldShowBlockAlert: function(vacation) {
+            if (!this.isVacationActive(vacation)) {
+                return false;
+            }
+
+            if (vacation.status !== 'Em Andamento') {
+                return false;
+            }
+
+            const startDate = new Date(vacation.start_date);
+            startDate.setHours(0, 0, 0, 0);
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const daysUntilStart = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
+            
+            // Mostra alerta apenas se começa amanhã
+            return daysUntilStart === 1;
+        },
 
         checkVacationAlerts: function(vacations, employees) {
             const today = new Date();
@@ -2731,49 +2802,67 @@
             const alerts = [];
 
             vacations.forEach(vacation => {
-                if (vacation.status === 'Em Andamento') {
+                // Pula férias que não estão ativas
+                if (!this.isVacationActive(vacation)) {
+                    return;
+                }
+
+                const employee = employees.find(emp => emp.id === vacation.employee_id);
+                if (!employee) return;
+
+                // Alerta de retorno
+                if (this.shouldShowReturnAlert(vacation)) {
                     const endDate = new Date(vacation.end_date);
                     endDate.setHours(0, 0, 0, 0);
-
                     const daysUntilReturn = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+                    
+                    alerts.push({
+                        type: 'retorno',
+                        message: `Retorna das férias em ${daysUntilReturn} ${daysUntilReturn === 1 ? 'dia' : 'dias'} (${this.formatDate(vacation.end_date)}) - Libere os acessos no AD e Microsoft 365`,
+                        employeeName: employee.name,
+                        returnDate: vacation.end_date,
+                        daysUntilReturn: daysUntilReturn,
+                        priority: daysUntilReturn <= 3 ? 'high' : 'medium'
+                    });
+                }
 
-                    if (daysUntilReturn >= 0 && daysUntilReturn <= 7) {
-                        const employee = employees.find(emp => emp.id === vacation.employee_id);
-                        if (employee) {
-                            alerts.push({
-                                type: 'retorno',
-                                message: `Retorna das férias em ${daysUntilReturn} ${daysUntilReturn === 1 ? 'dia' : 'dias'} (${this.formatDate(vacation.end_date)}) - Libere os acessos no AD e Microsoft 365`,
-                                employeeName: employee.name,
-                                returnDate: vacation.end_date,
-                                daysUntilReturn: daysUntilReturn,
-                                priority: daysUntilReturn <= 3 ? 'high' : 'medium'
-                            });
-                        }
-                    }
-
-                    const startDate = new Date(vacation.start_date);
-                    startDate.setHours(0, 0, 0, 0);
-
-                    const daysUntilStart = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
-
-                    if (daysUntilStart === 1) {
-                        const employee = employees.find(emp => emp.id === vacation.employee_id);
-                        if (employee) {
-                            alerts.push({
-                                type: 'bloqueio',
-                                message: `Inicia as férias amanhã (${this.formatDate(vacation.start_date)})`,
-                                employeeName: employee.name,
-                                startDate: vacation.start_date,
-                                daysUntilStart: daysUntilStart,
-                                priority: 'urgent'
-                            });
-                        }
-                    }
+                // Alerta de bloqueio
+                if (this.shouldShowBlockAlert(vacation)) {
+                    alerts.push({
+                        type: 'bloqueio',
+                        message: `Inicia as férias amanhã (${this.formatDate(vacation.start_date)})`,
+                        employeeName: employee.name,
+                        startDate: vacation.start_date,
+                        daysUntilStart: 1,
+                        priority: 'urgent'
+                    });
                 }
             });
 
             this.alerts = alerts;
             this.updateAlertCounter(alerts.length);
+            
+            // Mostra alerta de notificação se houver novos alertas e não foi mostrado ainda
+            if (alerts.length > 0 && !this.hasShownInitialAlert) {
+                this.hasShownInitialAlert = true;
+                // Mostra o modal automaticamente após um pequeno delay
+                setTimeout(() => {
+                    this.showVacationAlertsModal();
+                }, 1500);
+            }
+            
+            return alerts;
+        },
+
+        // Nova função para verificar e mostrar alertas automaticamente
+        checkAndShowAlerts: function(vacations, employees) {
+            const alerts = this.checkVacationAlerts(vacations, employees);
+            if (alerts.length > 0 && !this.hasShownInitialAlert) {
+                this.hasShownInitialAlert = true;
+                setTimeout(() => {
+                    this.showVacationAlertsModal();
+                }, 1500);
+            }
             return alerts;
         },
 
@@ -2880,10 +2969,12 @@
                 vacationAlertButton.parentNode.replaceChild(newButton, vacationAlertButton);
 
                 newButton.addEventListener('click', () => {
+                    this.hasShownInitialAlert = true; // Marca como visto ao abrir manualmente
                     this.showVacationAlertsModal();
                 });
             }
 
+            // Verificação a cada 30 segundos
             setInterval(() => {
                 this.checkVacationAlerts(appState.vacations, appState.employees);
             }, 30000);
@@ -3171,7 +3262,7 @@
     }
 
     // =============================================
-    // CARREGAMENTO DE DADOS
+    // CARREGAMENTO DE DADOS - MODIFICADO
     // =============================================
     async function loadAllData() {
         try {
@@ -3252,6 +3343,9 @@
             updateDashboardStats();
             updateCharts();
 
+            // VERIFICA E MOSTRA ALERTAS AUTOMATICAMENTE APÓS CARREGAR OS DADOS
+            vacationAlerts.checkAndShowAlerts(appState.vacations, appState.employees);
+
             return true;
 
         } catch (error) {
@@ -3268,6 +3362,10 @@
                     appState.projects = backup.projects || [];
 
                     showAlert('Usando dados locais (backup). Conecte-se à internet para sincronizar.', 'warning');
+                    
+                    // Também verifica com os dados do backup
+                    vacationAlerts.checkAndShowAlerts(appState.vacations, appState.employees);
+                    
                     return true;
                 }
             } catch (backupError) {
@@ -3313,7 +3411,7 @@
     }
 
     // =============================================
-    // ATUALIZAÇÃO DA TABELA DE RAMAIS COM STATUS DE FÉRIAS
+    // ATUALIZAÇÃO DA TABELA DE RAMAIS COM STATUS DE FÉRIAS - MODIFICADO
     // =============================================
     function updateExtensionsTable() {
         const tbody = document.getElementById('extensionsTableBody');
@@ -3326,17 +3424,10 @@
             return;
         }
 
-        // Criar mapa de colaboradores em férias (status = Férias)
+        // Cria um Set com os IDs dos colaboradores que estão em férias ativas
         const employeesOnVacation = new Set();
-        appState.employees.forEach(emp => {
-            if (emp.status === 'Férias') {
-                employeesOnVacation.add(emp.id);
-            }
-        });
-
-        // Verificar também colaboradores com férias em andamento na tabela de férias
         appState.vacations.forEach(vac => {
-            if (vac.status === 'Em Andamento') {
+            if (vacationAlerts.isVacationActive(vac)) {
                 employeesOnVacation.add(vac.employee_id);
             }
         });
@@ -3369,11 +3460,9 @@
                 sharedEmployeesText = sharedEmployees.length > 0 ? sharedEmployees.join(', ') : 'Não';
             }
 
-            // Determinar o status a ser exibido
             let displayStatus = extension.status;
             let statusClass = getStatusClass(extension.status);
 
-            // Se o colaborador está de férias, sobrescrever o status
             if (extension.isOnVacation) {
                 displayStatus = 'Férias';
                 statusClass = 'status-vacation';
@@ -3399,6 +3488,108 @@
             tbody.appendChild(row);
         });
     }
+
+    // =============================================
+    // ATUALIZAÇÃO DA TABELA DE FÉRIAS - MODIFICADO
+    // =============================================
+function updateVacationsTable() {
+    const tbody = document.getElementById('vacationsTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    // Filtra apenas férias ativas (não vencidas e não concluídas)
+    const activeVacations = appState.vacations.filter(vacation => {
+        return vacationAlerts.isVacationActive(vacation);
+    });
+
+    if (activeVacations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhuma solicitação de férias ativa</td></tr>';
+        return;
+    }
+
+    const vacationsWithEmployee = activeVacations.map(vacation => {
+        const employee = appState.employees.find(emp => emp.id === vacation.employee_id);
+        const progress = calculateVacationProgress(vacation.start_date, vacation.end_date);
+        return {
+            ...vacation,
+            employeeName: employee ? employee.name : 'N/A',
+            progress: progress
+        };
+    });
+
+    // ORDENA POR PROGRESSO EM ORDEM DECRESCENTE (100% primeiro, depois 99%, etc.)
+    vacationsWithEmployee.sort((a, b) => b.progress - a.progress);
+
+    vacationsWithEmployee.forEach(vacation => {
+        const progress = vacation.progress;
+        const days = calculateVacationDays(vacation.start_date, vacation.end_date);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>#VAC-${vacation.id.toString().padStart(3, '0')}</td>
+            <td>${vacation.employeeName}</td>
+            <td>${formatDate(vacation.start_date)}</td>
+            <td>${formatDate(vacation.end_date)}</td>
+            <td>
+                <div class="vacation-progress-container">
+                    <div class="vacation-progress-label">
+                        <span>${progress}%</span>
+                    </div>
+                    <div class="vacation-progress">
+                        <div class="vacation-progress-bar-dynamic" style="width: ${progress}%"></div>
+                    </div>
+                </div>
+            </td>
+            <td>${days}</td>
+            <td><span class="status-badge ${getStatusClass(vacation.status)}">${vacation.status}</span></td>
+            <td class="action-buttons">
+                <button class="btn btn-sm btn-outline-primary" onclick="editVacation(${vacation.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteVacation(${vacation.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+        vacationsWithEmployee.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+
+        vacationsWithEmployee.forEach(vacation => {
+            const progress = calculateVacationProgress(vacation.start_date, vacation.end_date);
+            const days = calculateVacationDays(vacation.start_date, vacation.end_date);
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>#VAC-${vacation.id.toString().padStart(3, '0')}</td>
+                <td>${vacation.employeeName}</td>
+                <td>${formatDate(vacation.start_date)}</td>
+                <td>${formatDate(vacation.end_date)}</td>
+                <td>
+                    <div class="vacation-progress-container">
+                        <div class="vacation-progress-label">
+                            <span>${progress}%</span>
+                        </div>
+                        <div class="vacation-progress">
+                            <div class="vacation-progress-bar-dynamic" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                </td>
+                <td>${days}</td>
+                <td><span class="status-badge ${getStatusClass(vacation.status)}">${vacation.status}</span></td>
+                <td class="action-buttons">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editVacation(${vacation.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteVacation(${vacation.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
 
     function updateAssetsTable() {
         const tbody = document.getElementById('assetsTableBody');
@@ -3444,62 +3635,6 @@
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteAsset(${asset.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-    }
-
-    function updateVacationsTable() {
-        const tbody = document.getElementById('vacationsTableBody');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
-        if (appState.vacations.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhuma solicitação de férias</td></tr>';
-            return;
-        }
-
-        const vacationsWithEmployee = appState.vacations.map(vacation => {
-            const employee = appState.employees.find(emp => emp.id === vacation.employee_id);
-            return {
-                ...vacation,
-                employeeName: employee ? employee.name : 'N/A'
-            };
-        });
-
-        vacationsWithEmployee.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
-
-        vacationsWithEmployee.forEach(vacation => {
-            const progress = calculateVacationProgress(vacation.start_date, vacation.end_date);
-            const days = calculateVacationDays(vacation.start_date, vacation.end_date);
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>#VAC-${vacation.id.toString().padStart(3, '0')}</td>
-                <td>${vacation.employeeName}</td>
-                <td>${formatDate(vacation.start_date)}</td>
-                <td>${formatDate(vacation.end_date)}</td>
-                <td>
-                    <div class="vacation-progress-container">
-                        <div class="vacation-progress-label">
-                            <span>${progress}%</span>
-                        </div>
-                        <div class="vacation-progress">
-                            <div class="vacation-progress-bar-dynamic" style="width: ${progress}%"></div>
-                        </div>
-                    </div>
-                </td>
-                <td>${days}</td>
-                <td><span class="status-badge ${getStatusClass(vacation.status)}">${vacation.status}</span></td>
-                <td class="action-buttons">
-                    <button class="btn btn-sm btn-outline-primary" onclick="editVacation(${vacation.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteVacation(${vacation.id})">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -3684,11 +3819,12 @@
     }
 
     // =============================================
-    // DASHBOARD
+    // DASHBOARD - MODIFICADO PARA MANTER TODOS OS DADOS
     // =============================================
     function updateDashboardStats() {
         const totalEmployees = appState.employees.length;
         const totalAssets = appState.assets.length;
+        // Conta todas as férias em andamento (independente de estarem vencidas ou não)
         const onVacation = appState.vacations.filter(v => v.status === 'Em Andamento').length;
         const pendingTasks = appState.projects.filter(p =>
             p.status === 'Em Andamento' || p.priority === 'Alta' || p.priority === 'Urgente'
@@ -3706,7 +3842,7 @@
     }
 
     // =============================================
-    // GRÁFICOS
+    // GRÁFICOS - MODIFICADO PARA MANTER TODOS OS DADOS
     // =============================================
     function initializeCharts() {
         updateCharts();
@@ -3740,7 +3876,7 @@
         const counts = Object.values(departmentCounts);
 
         const backgroundColors = [
-            '#4361ee', '#3a0ca3', '#4cc9f0', '#f6c23e', '#e74a3b',
+            '#1a2a4a', '#3a0ca3', '#4cc9f0', '#f6c23e', '#e74a3b',
             '#1cc88a', '#6f42c1', '#fd7e14', '#20c997', '#e83e8c'
         ];
 
@@ -3849,6 +3985,7 @@
         const ctx = document.getElementById('vacationRadarChart');
         if (!ctx) return;
 
+        // Usa todas as férias para o gráfico (incluindo concluídas e vencidas)
         const statusCounts = {
             'Solicitado': 0,
             'Aprovado': 0,
@@ -3905,6 +4042,7 @@
         const ctx = document.getElementById('vacationMonthChart');
         if (!ctx) return;
 
+        // Usa todas as férias para o gráfico
         const monthCounts = new Array(12).fill(0);
 
         appState.vacations.forEach(vacation => {
@@ -4400,9 +4538,6 @@
             });
         }
 
-        // =============================================
-        // EXPORTAÇÃO DE RAMAIS PDF - SEM INDICADOR DE FÉRIAS
-        // =============================================
         const pdfButton = document.getElementById('exportExtensionsPDF');
         const excelButton = document.getElementById('exportExtensionsExcel');
 
@@ -5186,6 +5321,9 @@ Departamento: ${department}
         }
     }
 
+    // =============================================
+    // FUNÇÃO DE IMPORTAÇÃO DE FÉRIAS
+    // =============================================
     function handleVacationsCSVImport(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -5201,63 +5339,180 @@ Departamento: ${department}
                     return;
                 }
 
-                const headers = rows[0].split(',').map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
+                const headerRow = rows[0];
+                let headers = [];
+                let isSemicolon = false;
+
+                if (headerRow.includes(';')) {
+                    isSemicolon = true;
+                    headers = headerRow.split(';').map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
+                } else {
+                    headers = headerRow.split(',').map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
+                }
 
                 const headerMap = {
                     'colaborador': 'employee_name',
                     'nome': 'employee_name',
+                    'colaborador(a)': 'employee_name',
+                    'colaboradores': 'employee_name',
                     'início': 'start_date',
                     'inicio': 'start_date',
+                    'data início': 'start_date',
+                    'data inicio': 'start_date',
+                    'data de início': 'start_date',
+                    'data de inicio': 'start_date',
                     'término': 'end_date',
                     'termino': 'end_date',
-                    'status': 'status'
+                    'data fim': 'end_date',
+                    'data término': 'end_date',
+                    'data termino': 'end_date',
+                    'data de término': 'end_date',
+                    'data de termino': 'end_date',
+                    'status': 'status',
+                    'situação': 'status',
+                    'situacao': 'status'
                 };
 
                 const mappedHeaders = headers.map(h => headerMap[h] || h);
 
+                const requiredFields = ['employee_name', 'start_date', 'end_date'];
+                const missingFields = requiredFields.filter(f => !mappedHeaders.includes(f));
+
+                if (missingFields.length > 0) {
+                    showAlert(`CSV inválido. Campos obrigatórios faltando: ${missingFields.join(', ')}. ` +
+                        `Formato esperado: Colaborador;Início;Término;Status (opcional). ` +
+                        `Headers detectados: ${headers.join(', ')}`, 'error');
+                    return;
+                }
+
                 const vacationsToImport = [];
+                let skipCount = 0;
 
                 for (let i = 1; i < rows.length; i++) {
                     if (!rows[i].trim()) continue;
 
-                    const values = parseCSVLine(rows[i]);
-                    const rowData = {};
+                    let values;
+                    if (isSemicolon) {
+                        values = rows[i].split(';').map(v => v.trim().replace(/^"|"$/g, ''));
+                    } else {
+                        values = parseCSVLine(rows[i]);
+                    }
 
+                    while (values.length < headers.length) {
+                        values.push('');
+                    }
+
+                    const rowData = {};
                     mappedHeaders.forEach((header, index) => {
                         rowData[header] = values[index] ? values[index].trim().replace(/^"|"$/g, '') : '';
                     });
 
                     if (rowData.employee_name && rowData.start_date && rowData.end_date) {
                         const employee = appState.employees.find(emp =>
-                            emp.name.toLowerCase() === rowData.employee_name.toLowerCase()
+                            emp.name.toLowerCase() === rowData.employee_name.toLowerCase().trim()
                         );
 
                         if (employee) {
-                            const startDate = new Date(rowData.start_date);
-                            const endDate = new Date(rowData.end_date);
+                            let startDate, endDate;
 
-                            if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
-                                vacationsToImport.push({
-                                    employee_id: employee.id,
-                                    start_date: startDate.toISOString().split('T')[0],
-                                    end_date: endDate.toISOString().split('T')[0],
-                                    status: rowData.status || 'Em Andamento',
-                                    created_at: new Date().toISOString(),
-                                    updated_at: new Date().toISOString()
-                                });
+                            const dateFormats = [
+                                (str) => {
+                                    if (!str) return null;
+                                    const parts = str.split('/');
+                                    if (parts.length === 3) {
+                                        const day = parseInt(parts[0]);
+                                        const month = parseInt(parts[1]) - 1;
+                                        const year = parseInt(parts[2]);
+                                        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                                            return new Date(year, month, day);
+                                        }
+                                    }
+                                    return null;
+                                },
+                                (str) => {
+                                    if (!str) return null;
+                                    const parts = str.split('-');
+                                    if (parts.length === 3) {
+                                        const day = parseInt(parts[0]);
+                                        const month = parseInt(parts[1]) - 1;
+                                        const year = parseInt(parts[2]);
+                                        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                                            return new Date(year, month, day);
+                                        }
+                                    }
+                                    return null;
+                                },
+                                (str) => {
+                                    if (!str) return null;
+                                    const date = new Date(str);
+                                    if (!isNaN(date.getTime())) return date;
+                                    return null;
+                                },
+                                (str) => {
+                                    if (!str) return null;
+                                    const parts = str.split('/');
+                                    if (parts.length === 3) {
+                                        const month = parseInt(parts[0]) - 1;
+                                        const day = parseInt(parts[1]);
+                                        const year = parseInt(parts[2]);
+                                        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                                            return new Date(year, month, day);
+                                        }
+                                    }
+                                    return null;
+                                }
+                            ];
+
+                            let parsedStart = null;
+                            let parsedEnd = null;
+
+                            for (const format of dateFormats) {
+                                if (!parsedStart) parsedStart = format(rowData.start_date);
+                                if (!parsedEnd) parsedEnd = format(rowData.end_date);
+                                if (parsedStart && parsedEnd) break;
+                            }
+
+                            if (parsedStart && parsedEnd && !isNaN(parsedStart.getTime()) && !isNaN(parsedEnd.getTime())) {
+                                if (parsedStart <= parsedEnd) {
+                                    vacationsToImport.push({
+                                        employee_id: employee.id,
+                                        start_date: parsedStart.toISOString().split('T')[0],
+                                        end_date: parsedEnd.toISOString().split('T')[0],
+                                        status: rowData.status && ['Em Andamento', 'Cancelado', 'Concluído'].includes(rowData.status)
+                                            ? rowData.status
+                                            : 'Em Andamento',
+                                        created_at: new Date().toISOString(),
+                                        updated_at: new Date().toISOString()
+                                    });
+                                } else {
+                                    console.warn(`Data de início (${rowData.start_date}) posterior à data de término (${rowData.end_date}) para ${rowData.employee_name}`);
+                                    skipCount++;
+                                }
+                            } else {
+                                console.warn(`Datas inválidas para ${rowData.employee_name}: início="${rowData.start_date}", término="${rowData.end_date}"`);
+                                skipCount++;
                             }
                         } else {
                             console.warn(`Colaborador não encontrado: ${rowData.employee_name}`);
+                            skipCount++;
                         }
+                    } else {
+                        console.warn(`Linha ${i} com dados incompletos:`, rowData);
+                        skipCount++;
                     }
                 }
 
                 if (vacationsToImport.length === 0) {
-                    showAlert('Nenhuma solicitação de férias válida encontrada no CSV.', 'warning');
+                    let errorMsg = 'Nenhuma solicitação de férias válida encontrada no CSV. Verifique:';
+                    errorMsg += '\n- O formato das datas (use DD/MM/YYYY ou YYYY-MM-DD)';
+                    errorMsg += '\n- Se os nomes dos colaboradores existem no sistema';
+                    errorMsg += '\n- Se a data de início é anterior à data de término';
+                    showAlert(errorMsg, 'warning');
                     return;
                 }
 
-                if (confirm(`Deseja importar ${vacationsToImport.length} solicitação(ões) de férias?`)) {
+                if (confirm(`Deseja importar ${vacationsToImport.length} solicitação(ões) de férias?` +
+                    (skipCount > 0 ? `\n${skipCount} linha(s) foram ignoradas por dados inválidos.` : ''))) {
                     importVacationsFromCSV(vacationsToImport);
                 }
 
@@ -5271,6 +5526,9 @@ Departamento: ${department}
         event.target.value = '';
     }
 
+    // =============================================
+    // IMPORTAÇÃO DE FÉRIAS DO CSV - FUNÇÃO AUXILIAR
+    // =============================================
     async function importVacationsFromCSV(vacations) {
         try {
             showAlert(`Importando ${vacations.length} solicitação(ões) de férias...`, 'info');
@@ -6005,310 +6263,426 @@ Departamento: ${department}
     }
 
     // =============================================
-    // EXPORTAÇÃO DE RAMAIS PDF - SEM INDICADOR DE FÉRIAS
+    // EXPORTAÇÃO DE RAMAIS PDF - MODIFICADO
     // =============================================
-    function exportExtensionsPDF() {
-        if (appState.isExporting) return;
-        setExportingState(true);
+function exportExtensionsPDF() {
+    if (appState.isExporting) return;
+    setExportingState(true);
 
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
 
-            const margin = 8;
-            const availableWidth = pageWidth - (2 * margin);
-            const maxY = pageHeight - margin - 10;
+        const margin = 8;
+        const availableWidth = pageWidth - (2 * margin);
+        const maxY = pageHeight - margin - 10;
 
-            const bluePalette = {
-                primary: [67, 97, 238],
-                light: [235, 241, 255]
-            };
-            const grayColor = [249, 250, 251];
+        const bluePalette = {
+            primary: [67, 97, 238],
+            light: [235, 241, 255]
+        };
+        const grayColor = [249, 250, 251];
 
-            function formatName(fullName) {
-                if (!fullName || fullName === 'N/A') return 'N/A';
-                return fullName.trim();
-            }
+        function formatName(fullName) {
+            if (!fullName || fullName === 'N/A') return 'N/A';
+            return fullName.trim();
+        }
 
-            function getFirstName(fullName) {
-                if (!fullName || fullName === 'N/A') return 'N/A';
-                const names = fullName.trim().split(/\s+/);
-                return names[0];
-            }
+        function getFirstName(fullName) {
+            if (!fullName || fullName === 'N/A') return 'N/A';
+            const names = fullName.trim().split(/\s+/);
+            return names[0];
+        }
 
-            doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
-            doc.rect(0, 0, pageWidth, 16, 'F');
+        doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
+        doc.rect(0, 0, pageWidth, 16, 'F');
 
-            doc.setFontSize(14);
-            doc.setTextColor(255, 255, 255);
-            doc.setFont(undefined, 'bold');
-            doc.text('LISTA DE RAMAIS', pageWidth / 2, 8, { align: 'center' });
+        doc.setFontSize(14);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont(undefined, 'bold');
+        doc.text('LISTA DE RAMAIS', pageWidth / 2, 8, { align: 'center' });
 
-            const currentDate = new Date().toLocaleDateString('pt-BR');
-            doc.setFontSize(9);
-            doc.text(`Data: ${currentDate}`, margin, 22);
+        const currentDate = new Date().toLocaleDateString('pt-BR');
+        doc.setFontSize(9);
+        doc.text(`Data: ${currentDate}`, margin, 22);
 
-            const extensionsByDepartment = {};
+        const extensionsByDepartment = {};
 
-            if (appState && appState.extensions && appState.employees) {
-                const employeesMap = {};
-                appState.employees.forEach(emp => {
-                    employeesMap[emp.id] = emp;
-                });
+        // REMOVIDO: Não verificamos mais quem está de férias para a exportação
+        if (appState && appState.extensions && appState.employees) {
+            const employeesMap = {};
+            appState.employees.forEach(emp => {
+                employeesMap[emp.id] = emp;
+            });
 
-                appState.extensions.forEach(extension => {
-                    const employee = employeesMap[extension.employee_id];
+            appState.extensions.forEach(extension => {
+                const employee = employeesMap[extension.employee_id];
 
-                    if (employee && employee.department) {
-                        const department = employee.department;
+                if (employee && employee.department) {
+                    const department = employee.department;
 
-                        if (!extensionsByDepartment[department]) {
-                            extensionsByDepartment[department] = [];
-                        }
+                    if (!extensionsByDepartment[department]) {
+                        extensionsByDepartment[department] = [];
+                    }
 
-                        let displayName = formatName(employee.name);
+                    let displayName = formatName(employee.name);
 
-                        if (extension.shared_employees && extension.shared_employees.trim() !== '') {
-                            try {
-                                const sharedIds = extension.shared_employees.split(',').map(id => id.trim());
-                                const sharedNames = [];
+                    if (extension.shared_employees && extension.shared_employees.trim() !== '') {
+                        try {
+                            const sharedIds = extension.shared_employees.split(',').map(id => id.trim());
+                            const sharedNames = [];
 
-                                sharedIds.forEach(sharedId => {
-                                    if (sharedId) {
-                                        const sharedEmployee = employeesMap[sharedId];
-                                        if (sharedEmployee) {
-                                            sharedNames.push(formatName(sharedEmployee.name));
-                                        }
+                            sharedIds.forEach(sharedId => {
+                                if (sharedId) {
+                                    const sharedEmployee = employeesMap[sharedId];
+                                    if (sharedEmployee) {
+                                        sharedNames.push(formatName(sharedEmployee.name));
                                     }
-                                });
-
-                                if (sharedNames.length > 0) {
-                                    displayName += ' / ' + sharedNames.join(' / ');
                                 }
-                            } catch (error) {
-                                console.error('Erro ao processar shared_employees:', error);
+                            });
+
+                            if (sharedNames.length > 0) {
+                                displayName += ' / ' + sharedNames.join(' / ');
                             }
-                        }
-
-                        const extensionData = {
-                            name: displayName,
-                            fullName: displayName,
-                            number: extension.number || 'N/A',
-                            department: department,
-                            isShared: !!extension.shared_employees
-                        };
-
-                        if (!extensionsByDepartment[department].some(ext =>
-                            ext.number === extensionData.number && ext.name === extensionData.name)) {
-                            extensionsByDepartment[department].push(extensionData);
-                        }
-
-                        if (extension.shared_employees && extension.shared_employees.trim() !== '') {
-                            try {
-                                const sharedIds = extension.shared_employees.split(',').map(id => id.trim());
-
-                                sharedIds.forEach(sharedId => {
-                                    if (sharedId) {
-                                        const sharedEmployee = employeesMap[sharedId];
-                                        if (sharedEmployee && sharedEmployee.department) {
-                                            const sharedDepartment = sharedEmployee.department;
-
-                                            if (!extensionsByDepartment[sharedDepartment]) {
-                                                extensionsByDepartment[sharedDepartment] = [];
-                                            }
-
-                                            const alreadyExists = extensionsByDepartment[sharedDepartment].some(
-                                                ext => ext.number === extension.number && ext.name === displayName
-                                            );
-
-                                            if (!alreadyExists) {
-                                                extensionsByDepartment[sharedDepartment].push({
-                                                    name: displayName,
-                                                    fullName: displayName,
-                                                    number: extension.number || 'N/A',
-                                                    department: sharedDepartment,
-                                                    isShared: true
-                                                });
-                                            }
-                                        }
-                                    }
-                                });
-                            } catch (error) {
-                                console.error('Erro ao processar departamentos compartilhados:', error);
-                            }
+                        } catch (error) {
+                            console.error('Erro ao processar shared_employees:', error);
                         }
                     }
-                });
-            }
 
-            function getDepartmentHeight(department) {
-                const departmentHeaderHeight = 5;
-                const lineHeight = 4;
-                const internalPadding = 1.5;
-                return departmentHeaderHeight + (extensionsByDepartment[department].length * lineHeight) + internalPadding;
-            }
+                    const extensionData = {
+                        name: displayName,
+                        fullName: displayName,
+                        number: extension.number || 'N/A',
+                        department: department,
+                        isShared: !!extension.shared_employees,
+                        // REMOVIDO: isOnVacation não é mais usado na exportação
+                    };
 
-            const priorityDepartments = [
-                'DIRETOR EXECUTIVO',
-                'DIRETOR ADMINISTRATIVO',
-                'SECRETARIA DE DIRETORIA',
-                'RECEPÇÃO',
-                'COPA',
-                'PORTARIA',
-                'SALA DE REUNIÃO'
-            ];
+                    if (!extensionsByDepartment[department].some(ext =>
+                        ext.number === extensionData.number && ext.name === extensionData.name)) {
+                        extensionsByDepartment[department].push(extensionData);
+                    }
 
-            const sortedDepartments = Object.keys(extensionsByDepartment).sort((a, b) => {
-                const aIndex = priorityDepartments.indexOf(a.toUpperCase());
-                const bIndex = priorityDepartments.indexOf(b.toUpperCase());
+                    if (extension.shared_employees && extension.shared_employees.trim() !== '') {
+                        try {
+                            const sharedIds = extension.shared_employees.split(',').map(id => id.trim());
 
-                if (aIndex !== -1 && bIndex !== -1) {
-                    return aIndex - bIndex;
+                            sharedIds.forEach(sharedId => {
+                                if (sharedId) {
+                                    const sharedEmployee = employeesMap[sharedId];
+                                    if (sharedEmployee && sharedEmployee.department) {
+                                        const sharedDepartment = sharedEmployee.department;
+
+                                        if (!extensionsByDepartment[sharedDepartment]) {
+                                            extensionsByDepartment[sharedDepartment] = [];
+                                        }
+
+                                        const alreadyExists = extensionsByDepartment[sharedDepartment].some(
+                                            ext => ext.number === extension.number && ext.name === displayName
+                                        );
+
+                                        if (!alreadyExists) {
+                                            extensionsByDepartment[sharedDepartment].push({
+                                                name: displayName,
+                                                fullName: displayName,
+                                                number: extension.number || 'N/A',
+                                                department: sharedDepartment,
+                                                isShared: true,
+                                                // REMOVIDO: isOnVacation não é mais usado
+                                            });
+                                        }
+                                    }
+                                }
+                            });
+                        } catch (error) {
+                            console.error('Erro ao processar departamentos compartilhados:', error);
+                        }
+                    }
                 }
-                if (aIndex !== -1) return -1;
-                if (bIndex !== -1) return 1;
-                return a.localeCompare(b);
             });
+        }
 
-            sortedDepartments.forEach(department => {
-                extensionsByDepartment[department].sort((a, b) => a.fullName.localeCompare(b.fullName));
-            });
-
-            const startY = margin + 24;
+        function getDepartmentHeight(department) {
             const departmentHeaderHeight = 5;
-            const lineHeight = 4.5;
-            const horizontalSpacing = 3.5;
-            let currentY = startY;
+            const lineHeight = 4;
+            const internalPadding = 1.5;
+            return departmentHeaderHeight + (extensionsByDepartment[department].length * lineHeight) + internalPadding;
+        }
 
-            const primeiraLinha = sortedDepartments.filter(dept =>
-                ['DIRETOR EXECUTIVO', 'DIRETOR ADMINISTRATIVO', 'SECRETARIA DE DIRETORIA'].includes(dept.toUpperCase())
-            ).slice(0, 3);
+        const priorityDepartments = [
+            'DIRETOR EXECUTIVO',
+            'DIRETOR ADMINISTRATIVO',
+            'SECRETARIA DE DIRETORIA',
+            'RECEPÇÃO',
+            'COPA',
+            'PORTARIA',
+            'SALA DE REUNIÃO'
+        ];
 
-            if (primeiraLinha.length > 0) {
-                const colunas = 3;
-                const larguraColuna = (availableWidth - (colunas - 1) * horizontalSpacing) / colunas;
-                let currentX = margin;
-                let maxAlturaLinha = 0;
+        const sortedDepartments = Object.keys(extensionsByDepartment).sort((a, b) => {
+            const aIndex = priorityDepartments.indexOf(a.toUpperCase());
+            const bIndex = priorityDepartments.indexOf(b.toUpperCase());
 
-                primeiraLinha.forEach(department => {
-                    const altura = getDepartmentHeight(department);
-                    if (altura > maxAlturaLinha) maxAlturaLinha = altura;
-                });
+            if (aIndex !== -1 && bIndex !== -1) {
+                return aIndex - bIndex;
+            }
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            return a.localeCompare(b);
+        });
 
-                if (currentY + maxAlturaLinha > maxY) {
-                    doc.addPage();
-                    currentY = margin;
+        sortedDepartments.forEach(department => {
+            extensionsByDepartment[department].sort((a, b) => a.fullName.localeCompare(b.fullName));
+        });
+
+        const startY = margin + 24;
+        const departmentHeaderHeight = 5;
+        const lineHeight = 4.5;
+        const horizontalSpacing = 3.5;
+        let currentY = startY;
+
+        const primeiraLinha = sortedDepartments.filter(dept =>
+            ['DIRETOR EXECUTIVO', 'DIRETOR ADMINISTRATIVO', 'SECRETARIA DE DIRETORIA'].includes(dept.toUpperCase())
+        ).slice(0, 3);
+
+        if (primeiraLinha.length > 0) {
+            const colunas = 3;
+            const larguraColuna = (availableWidth - (colunas - 1) * horizontalSpacing) / colunas;
+            let currentX = margin;
+            let maxAlturaLinha = 0;
+
+            primeiraLinha.forEach(department => {
+                const altura = getDepartmentHeight(department);
+                if (altura > maxAlturaLinha) maxAlturaLinha = altura;
+            });
+
+            if (currentY + maxAlturaLinha > maxY) {
+                doc.addPage();
+                currentY = margin;
+            }
+
+            primeiraLinha.forEach(department => {
+                const extensions = extensionsByDepartment[department];
+                const alturaDepartamento = getDepartmentHeight(department);
+
+                doc.setFillColor(grayColor[0], grayColor[1], grayColor[2]);
+                doc.roundedRect(currentX, currentY, larguraColuna, alturaDepartamento, 1, 1, 'F');
+
+                doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
+                doc.roundedRect(currentX, currentY, larguraColuna, departmentHeaderHeight, 1, 1, 'F');
+
+                doc.setTextColor(255, 255, 255);
+                doc.setFont(undefined, 'bold');
+
+                const nomeCompleto = department.toUpperCase();
+                let fontSize = 9;
+
+                const textWidth = doc.getStringUnitWidth(nomeCompleto) * fontSize / doc.internal.scaleFactor;
+                if (textWidth > larguraColuna - 6) {
+                    fontSize = 5;
+                }
+                if (textWidth > larguraColuna - 4) {
+                    fontSize = 4;
                 }
 
-                primeiraLinha.forEach(department => {
-                    const extensions = extensionsByDepartment[department];
-                    const alturaDepartamento = getDepartmentHeight(department);
+                doc.setFontSize(fontSize);
+                doc.text(nomeCompleto, currentX + larguraColuna/2, currentY + departmentHeaderHeight/2, {
+                    align: 'center',
+                    baseline: 'middle'
+                });
 
-                    doc.setFillColor(grayColor[0], grayColor[1], grayColor[2]);
-                    doc.roundedRect(currentX, currentY, larguraColuna, alturaDepartamento, 1, 1, 'F');
+                let currentDeptY = currentY + departmentHeaderHeight + 1;
+
+                extensions.forEach(extension => {
+                    doc.setFontSize(9);
+                    doc.setTextColor(107, 114, 128);
+                    doc.setFont(undefined, 'normal');
+
+                    const maxCaracteresNome = 50;
+                    const nomeExibicao = extension.name.length > maxCaracteresNome ?
+                        extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
+
+                    // REMOVIDO: Não adiciona mais o indicador de férias no nome
+                    doc.text(nomeExibicao, currentX + 2, currentDeptY + 2.5);
+
+                    const larguraNumero = 9;
+                    const alturaNumero = 4;
+                    const posXNumero = currentX + larguraColuna - larguraNumero - 2;
 
                     doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
-                    doc.roundedRect(currentX, currentY, larguraColuna, departmentHeaderHeight, 1, 1, 'F');
+                    doc.roundedRect(posXNumero, currentDeptY + 0.3, larguraNumero, alturaNumero, 0.5, 0.5, 'F');
 
                     doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(9);
                     doc.setFont(undefined, 'bold');
 
-                    const nomeCompleto = department.toUpperCase();
-                    let fontSize = 9;
-
-                    const textWidth = doc.getStringUnitWidth(nomeCompleto) * fontSize / doc.internal.scaleFactor;
-                    if (textWidth > larguraColuna - 6) {
-                        fontSize = 5;
-                    }
-                    if (textWidth > larguraColuna - 4) {
-                        fontSize = 4;
-                    }
-
-                    doc.setFontSize(fontSize);
-                    doc.text(nomeCompleto, currentX + larguraColuna/2, currentY + departmentHeaderHeight/2, {
+                    doc.text(extension.number, posXNumero + larguraNumero/2, currentDeptY + 0.3 + alturaNumero/2, {
                         align: 'center',
                         baseline: 'middle'
                     });
 
-                    let currentDeptY = currentY + departmentHeaderHeight + 1;
-
-                    extensions.forEach(extension => {
-                        doc.setFontSize(9);
-                        doc.setTextColor(107, 114, 128);
-                        doc.setFont(undefined, 'normal');
-
-                        const maxCaracteresNome = 50;
-                        const nomeExibicao = extension.name.length > maxCaracteresNome ?
-                            extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
-
-                        doc.text(nomeExibicao, currentX + 2, currentDeptY + 2.5);
-
-                        const larguraNumero = 9;
-                        const alturaNumero = 4;
-                        const posXNumero = currentX + larguraColuna - larguraNumero - 2;
-
-                        doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
-                        doc.roundedRect(posXNumero, currentDeptY + 0.3, larguraNumero, alturaNumero, 0.5, 0.5, 'F');
-
-                        doc.setTextColor(255, 255, 255);
-                        doc.setFontSize(9);
-                        doc.setFont(undefined, 'bold');
-
-                        doc.text(extension.number, posXNumero + larguraNumero/2, currentDeptY + 0.3 + alturaNumero/2, {
-                            align: 'center',
-                            baseline: 'middle'
-                        });
-
-                        currentDeptY += lineHeight;
-                    });
-
-                    currentX += larguraColuna + horizontalSpacing;
+                    currentDeptY += lineHeight;
                 });
 
-                currentY += maxAlturaLinha + 8;
+                currentX += larguraColuna + horizontalSpacing;
+            });
+
+            currentY += maxAlturaLinha + 8;
+        }
+
+        const segundaLinha = sortedDepartments.filter(dept =>
+            ['RECEPÇÃO', 'COPA', 'PORTARIA', 'SALA DE REUNIÃO'].includes(dept.toUpperCase())
+        ).slice(0, 4);
+
+        if (segundaLinha.length > 0) {
+            const colunas = 4;
+            const larguraColuna = (availableWidth - (colunas - 1) * horizontalSpacing) / colunas;
+            let currentX = margin;
+            let maxAlturaLinha = 0;
+
+            segundaLinha.forEach(department => {
+                const altura = getDepartmentHeight(department);
+                if (altura > maxAlturaLinha) maxAlturaLinha = altura;
+            });
+
+            if (currentY + maxAlturaLinha > maxY) {
+                doc.addPage();
+                currentY = margin;
             }
 
-            const segundaLinha = sortedDepartments.filter(dept =>
-                ['RECEPÇÃO', 'COPA', 'PORTARIA', 'SALA DE REUNIÃO'].includes(dept.toUpperCase())
-            ).slice(0, 4);
+            segundaLinha.forEach(department => {
+                const extensions = extensionsByDepartment[department];
+                const alturaDepartamento = getDepartmentHeight(department);
 
-            if (segundaLinha.length > 0) {
-                const colunas = 4;
-                const larguraColuna = (availableWidth - (colunas - 1) * horizontalSpacing) / colunas;
-                let currentX = margin;
-                let maxAlturaLinha = 0;
+                if (currentX + larguraColuna > pageWidth - margin) {
+                    currentX = margin;
+                    currentY += maxAlturaLinha + 3;
 
-                segundaLinha.forEach(department => {
-                    const altura = getDepartmentHeight(department);
-                    if (altura > maxAlturaLinha) maxAlturaLinha = altura;
-                });
-
-                if (currentY + maxAlturaLinha > maxY) {
-                    doc.addPage();
-                    currentY = margin;
+                    if (currentY + maxAlturaLinha > maxY) {
+                        doc.addPage();
+                        currentY = margin;
+                    }
                 }
 
-                segundaLinha.forEach(department => {
+                doc.setFillColor(grayColor[0], grayColor[1], grayColor[2]);
+                doc.roundedRect(currentX, currentY, larguraColuna, alturaDepartamento, 1, 1, 'F');
+
+                doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
+                doc.roundedRect(currentX, currentY, larguraColuna, departmentHeaderHeight, 1, 1, 'F');
+
+                doc.setTextColor(255, 255, 255);
+                doc.setFont(undefined, 'bold');
+
+                const nomeCompleto = department.toUpperCase();
+                let fontSize = 9;
+
+                const textWidth = doc.getStringUnitWidth(nomeCompleto) * fontSize / doc.internal.scaleFactor;
+                if (textWidth > larguraColuna - 4) {
+                    fontSize = 4.5;
+                }
+
+                doc.setFontSize(fontSize);
+                doc.text(nomeCompleto, currentX + larguraColuna/2, currentY + departmentHeaderHeight/2, {
+                    align: 'center',
+                    baseline: 'middle'
+                });
+
+                let currentDeptY = currentY + departmentHeaderHeight + 1;
+
+                extensions.forEach(extension => {
+                    doc.setFontSize(9);
+                    doc.setTextColor(107, 114, 128);
+                    doc.setFont(undefined, 'normal');
+
+                    const maxCaracteresNome = 30;
+                    const nomeExibicao = extension.name.length > maxCaracteresNome ?
+                        extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
+
+                    // REMOVIDO: Não adiciona mais o indicador de férias no nome
+                    doc.text(nomeExibicao, currentX + 1.5, currentDeptY + 2.3);
+
+                    const larguraNumero = 9;
+                    const alturaNumero = 4;
+                    const posXNumero = currentX + larguraColuna - larguraNumero - 1;
+
+                    doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
+                    doc.roundedRect(posXNumero, currentDeptY + 0.3, larguraNumero, alturaNumero, 0.5, 0.5, 'F');
+
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(9);
+                    doc.setFont(undefined, 'bold');
+
+                    doc.text(extension.number, posXNumero + larguraNumero/2, currentDeptY + 0.3 + alturaNumero/2, {
+                        align: 'center',
+                        baseline: 'middle'
+                    });
+
+                    currentDeptY += lineHeight;
+                });
+
+                currentX += larguraColuna + horizontalSpacing;
+            });
+
+            currentY += maxAlturaLinha + 8;
+        }
+
+        const departamentosRestantes = sortedDepartments.filter(dept =>
+            !primeiraLinha.includes(dept) && !segundaLinha.includes(dept)
+        );
+
+        if (departamentosRestantes.length > 0) {
+            const maxColunas = 2;
+            const larguraColuna = (availableWidth - (maxColunas - 1) * horizontalSpacing) / maxColunas;
+            const espacamentoVertical = 5;
+
+            const colunas = Array.from({ length: maxColunas }, () => []);
+            const alturasColunas = Array(maxColunas).fill(0);
+
+            const departamentosOrdenados = [...departamentosRestantes].sort((a, b) =>
+                getDepartmentHeight(b) - getDepartmentHeight(a)
+            );
+
+            departamentosOrdenados.forEach(department => {
+                const altura = getDepartmentHeight(department);
+                const colunaMenorAltura = alturasColunas.indexOf(Math.min(...alturasColunas));
+                colunas[colunaMenorAltura].push(department);
+                alturasColunas[colunaMenorAltura] += altura + espacamentoVertical;
+            });
+
+            colunas.forEach(col => col.sort((a, b) => a.localeCompare(b)));
+
+            const alturaMaximaColunas = Math.max(...alturasColunas);
+            if (currentY + alturaMaximaColunas > maxY) {
+                doc.addPage();
+                currentY = margin;
+            }
+
+            let posX = margin;
+
+            for (let colunaIndex = 0; colunaIndex < maxColunas; colunaIndex++) {
+                let posY = currentY;
+
+                colunas[colunaIndex].forEach(department => {
                     const extensions = extensionsByDepartment[department];
                     const alturaDepartamento = getDepartmentHeight(department);
 
-                    if (currentX + larguraColuna > pageWidth - margin) {
-                        currentX = margin;
-                        currentY += maxAlturaLinha + 3;
-
-                        if (currentY + maxAlturaLinha > maxY) {
+                    if (posY + alturaDepartamento > maxY) {
+                        if (colunaIndex < maxColunas - 1) {
+                            posX += larguraColuna + horizontalSpacing;
+                            posY = currentY;
+                        } else {
                             doc.addPage();
-                            currentY = margin;
+                            posY = margin;
                         }
                     }
 
                     doc.setFillColor(grayColor[0], grayColor[1], grayColor[2]);
-                    doc.roundedRect(currentX, currentY, larguraColuna, alturaDepartamento, 1, 1, 'F');
+                    doc.roundedRect(posX, posY, larguraColuna, alturaDepartamento, 1, 1, 'F');
 
                     doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
-                    doc.roundedRect(currentX, currentY, larguraColuna, departmentHeaderHeight, 1, 1, 'F');
+                    doc.roundedRect(posX, posY, larguraColuna, departmentHeaderHeight, 1, 1, 'F');
 
                     doc.setTextColor(255, 255, 255);
                     doc.setFont(undefined, 'bold');
@@ -6317,32 +6691,33 @@ Departamento: ${department}
                     let fontSize = 9;
 
                     const textWidth = doc.getStringUnitWidth(nomeCompleto) * fontSize / doc.internal.scaleFactor;
-                    if (textWidth > larguraColuna - 4) {
+                    if (textWidth > larguraColuna - 5) {
                         fontSize = 4.5;
                     }
 
                     doc.setFontSize(fontSize);
-                    doc.text(nomeCompleto, currentX + larguraColuna/2, currentY + departmentHeaderHeight/2, {
+                    doc.text(nomeCompleto, posX + larguraColuna/2, posY + departmentHeaderHeight/2, {
                         align: 'center',
                         baseline: 'middle'
                     });
 
-                    let currentDeptY = currentY + departmentHeaderHeight + 1;
+                    let currentDeptY = posY + departmentHeaderHeight + 1;
 
                     extensions.forEach(extension => {
                         doc.setFontSize(9);
                         doc.setTextColor(107, 114, 128);
                         doc.setFont(undefined, 'normal');
 
-                        const maxCaracteresNome = 30;
+                        const maxCaracteresNome = 35;
                         const nomeExibicao = extension.name.length > maxCaracteresNome ?
                             extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
 
-                        doc.text(nomeExibicao, currentX + 1.5, currentDeptY + 2.3);
+                        // REMOVIDO: Não adiciona mais o indicador de férias no nome
+                        doc.text(nomeExibicao, posX + 1.5, currentDeptY + 2.3);
 
                         const larguraNumero = 9;
                         const alturaNumero = 4;
-                        const posXNumero = currentX + larguraColuna - larguraNumero - 1;
+                        const posXNumero = posX + larguraColuna - larguraNumero - 1;
 
                         doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
                         doc.roundedRect(posXNumero, currentDeptY + 0.3, larguraNumero, alturaNumero, 0.5, 0.5, 'F');
@@ -6359,154 +6734,42 @@ Departamento: ${department}
                         currentDeptY += lineHeight;
                     });
 
-                    currentX += larguraColuna + horizontalSpacing;
+                    posY += alturaDepartamento + 4;
                 });
 
-                currentY += maxAlturaLinha + 8;
+                posX += larguraColuna + horizontalSpacing;
             }
-
-            const departamentosRestantes = sortedDepartments.filter(dept =>
-                !primeiraLinha.includes(dept) && !segundaLinha.includes(dept)
-            );
-
-            if (departamentosRestantes.length > 0) {
-                const maxColunas = 2;
-                const larguraColuna = (availableWidth - (maxColunas - 1) * horizontalSpacing) / maxColunas;
-                const espacamentoVertical = 5;
-
-                const colunas = Array.from({ length: maxColunas }, () => []);
-                const alturasColunas = Array(maxColunas).fill(0);
-
-                const departamentosOrdenados = [...departamentosRestantes].sort((a, b) =>
-                    getDepartmentHeight(b) - getDepartmentHeight(a)
-                );
-
-                departamentosOrdenados.forEach(department => {
-                    const altura = getDepartmentHeight(department);
-                    const colunaMenorAltura = alturasColunas.indexOf(Math.min(...alturasColunas));
-                    colunas[colunaMenorAltura].push(department);
-                    alturasColunas[colunaMenorAltura] += altura + espacamentoVertical;
-                });
-
-                colunas.forEach(col => col.sort((a, b) => a.localeCompare(b)));
-
-                const alturaMaximaColunas = Math.max(...alturasColunas);
-                if (currentY + alturaMaximaColunas > maxY) {
-                    doc.addPage();
-                    currentY = margin;
-                }
-
-                let posX = margin;
-
-                for (let colunaIndex = 0; colunaIndex < maxColunas; colunaIndex++) {
-                    let posY = currentY;
-
-                    colunas[colunaIndex].forEach(department => {
-                        const extensions = extensionsByDepartment[department];
-                        const alturaDepartamento = getDepartmentHeight(department);
-
-                        if (posY + alturaDepartamento > maxY) {
-                            if (colunaIndex < maxColunas - 1) {
-                                posX += larguraColuna + horizontalSpacing;
-                                posY = currentY;
-                            } else {
-                                doc.addPage();
-                                posY = margin;
-                            }
-                        }
-
-                        doc.setFillColor(grayColor[0], grayColor[1], grayColor[2]);
-                        doc.roundedRect(posX, posY, larguraColuna, alturaDepartamento, 1, 1, 'F');
-
-                        doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
-                        doc.roundedRect(posX, posY, larguraColuna, departmentHeaderHeight, 1, 1, 'F');
-
-                        doc.setTextColor(255, 255, 255);
-                        doc.setFont(undefined, 'bold');
-
-                        const nomeCompleto = department.toUpperCase();
-                        let fontSize = 9;
-
-                        const textWidth = doc.getStringUnitWidth(nomeCompleto) * fontSize / doc.internal.scaleFactor;
-                        if (textWidth > larguraColuna - 5) {
-                            fontSize = 4.5;
-                        }
-
-                        doc.setFontSize(fontSize);
-                        doc.text(nomeCompleto, posX + larguraColuna/2, posY + departmentHeaderHeight/2, {
-                            align: 'center',
-                            baseline: 'middle'
-                        });
-
-                        let currentDeptY = posY + departmentHeaderHeight + 1;
-
-                        extensions.forEach(extension => {
-                            doc.setFontSize(9);
-                            doc.setTextColor(107, 114, 128);
-                            doc.setFont(undefined, 'normal');
-
-                            const maxCaracteresNome = 35;
-                            const nomeExibicao = extension.name.length > maxCaracteresNome ?
-                                extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
-
-                            doc.text(nomeExibicao, posX + 1.5, currentDeptY + 2.3);
-
-                            const larguraNumero = 9;
-                            const alturaNumero = 4;
-                            const posXNumero = posX + larguraColuna - larguraNumero - 1;
-
-                            doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
-                            doc.roundedRect(posXNumero, currentDeptY + 0.3, larguraNumero, alturaNumero, 0.5, 0.5, 'F');
-
-                            doc.setTextColor(255, 255, 255);
-                            doc.setFontSize(9);
-                            doc.setFont(undefined, 'bold');
-
-                            doc.text(extension.number, posXNumero + larguraNumero/2, currentDeptY + 0.3 + alturaNumero/2, {
-                                align: 'center',
-                                baseline: 'middle'
-                            });
-
-                            currentDeptY += lineHeight;
-                        });
-
-                        posY += alturaDepartamento + 4;
-                    });
-
-                    posX += larguraColuna + horizontalSpacing;
-                }
-            }
-
-            const footerY = pageHeight - margin;
-            doc.setFontSize(9);
-            doc.setTextColor(107, 114, 128);
-            doc.text(
-                `Lista atualizada em ${currentDate} • Para atualizações, entre em contato com o departamento de TI`,
-                pageWidth / 2,
-                footerY,
-                { align: 'center' }
-            );
-
-            doc.save(`lista_ramais_${currentDate.replace(/\//g, '-')}.pdf`);
-
-            if (typeof showAlert === 'function') {
-                showAlert('Lista de ramais exportada com sucesso!', 'success');
-            }
-
-        } catch (error) {
-            console.error('Erro ao exportar PDF de ramais:', error);
-            if (typeof showAlert === 'function') {
-                showAlert('Erro ao exportar PDF: ' + error.message, 'error');
-            } else {
-                alert('Erro ao exportar PDF: ' + error.message);
-            }
-        } finally {
-            setExportingState(false);
         }
-    }
 
+        const footerY = pageHeight - margin;
+        doc.setFontSize(9);
+        doc.setTextColor(107, 114, 128);
+        doc.text(
+            `Lista atualizada em ${currentDate} • Para atualizações, entre em contato com o departamento de TI`,
+            pageWidth / 2,
+            footerY,
+            { align: 'center' }
+        );
+
+        doc.save(`lista_ramais_${currentDate.replace(/\//g, '-')}.pdf`);
+
+        if (typeof showAlert === 'function') {
+            showAlert('Lista de ramais exportada com sucesso!', 'success');
+        }
+
+    } catch (error) {
+        console.error('Erro ao exportar PDF de ramais:', error);
+        if (typeof showAlert === 'function') {
+            showAlert('Erro ao exportar PDF: ' + error.message, 'error');
+        } else {
+            alert('Erro ao exportar PDF: ' + error.message);
+        }
+    } finally {
+        setExportingState(false);
+    }
+}
     // =============================================
-    // EXPORTAÇÃO DE RAMAIS EXCEL
+    // EXPORTAÇÃO DE RAMAIS EXCEL - MODIFICADO
     // =============================================
     function exportExtensionsExcel() {
         if (appState.isExporting) return;
@@ -6515,15 +6778,10 @@ Departamento: ${department}
         try {
             const wb = XLSX.utils.book_new();
 
-            // Criar conjunto de colaboradores em férias
+            // Cria um Set com os IDs dos colaboradores que estão em férias ativas
             const employeesOnVacation = new Set();
-            appState.employees.forEach(emp => {
-                if (emp.status === 'Férias') {
-                    employeesOnVacation.add(emp.id);
-                }
-            });
             appState.vacations.forEach(vac => {
-                if (vac.status === 'Em Andamento') {
+                if (vacationAlerts.isVacationActive(vac)) {
                     employeesOnVacation.add(vac.employee_id);
                 }
             });
@@ -6652,7 +6910,7 @@ Departamento: ${department}
         }
     }
 
-    // FÉRIAS
+    // FÉRIAS - Exporta todas as férias (incluindo concluídas) para o PDF
     async function exportVacationsPDF() {
         if (appState.isExporting) return;
         setExportingState(true);
@@ -6700,6 +6958,7 @@ Departamento: ${department}
         }
     }
 
+    // FÉRIAS - Exporta todas as férias (incluindo concluídas) para o Excel
     function exportVacationsExcel() {
         if (appState.isExporting) return;
         setExportingState(true);
@@ -6841,6 +7100,7 @@ Departamento: ${department}
             }).join(' ');
         }
 
+        // Dados do organograma (mantido igual ao original)
         const colaboradores = {
             "Marcia Machado Daudt": [
                 { nome: "Alan Campos de Freitas", cargo: "Executivo (a) de Contas", depto: "Comercial" },
@@ -7423,7 +7683,11 @@ Departamento: ${department}
 
     console.log('Sistema de Gestão Record carregado com sucesso!');
     console.log('Organograma integrado com sucesso!');
-    console.log('Status de ramais agora mostra colaboradores em férias na lista e no Excel, mas o PDF não exibe indicador de férias!');
+    console.log('Importação de férias CSV agora suporta os formatos: Colaborador;Início;Término;Status');
+    console.log('Suporta separadores por vírgula ou ponto e vírgula');
+    console.log('Datas nos formatos DD/MM/YYYY, DD-MM-YYYY ou YYYY-MM-DD');
+    console.log('Regra de férias: após 1 dia vencido ou status Concluído, não aparece na lista nem nos alertas');
+    console.log('Notificações de férias são exibidas automaticamente ao carregar a página!');
     </script>
 </body>
 </html>

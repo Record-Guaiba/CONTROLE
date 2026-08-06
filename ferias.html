@@ -510,6 +510,27 @@
             opacity: 0.5;
         }
 
+        /* Status específicos de férias */
+        .status-ferias-nao-iniciada {
+            color: #6c757d;
+        }
+        
+        .status-em-andamento {
+            color: #f39c12;
+        }
+        
+        .status-ferias-iniciada {
+            color: #3498db;
+        }
+        
+        .status-concluido {
+            color: #28a745;
+        }
+        
+        .status-cancelado {
+            color: #dc3545;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 260px;
@@ -883,6 +904,12 @@
                 vacations: appState.vacations.length
             });
 
+            // Debug: Mostrar status das férias
+            if (appState.vacations.length > 0) {
+                console.log('Status de férias encontrados:', 
+                    [...new Set(appState.vacations.map(v => v.status))]);
+            }
+
             renderTable();
 
             return true;
@@ -894,19 +921,40 @@
     }
 
     // =============================================
-    // LÓGICA DE NEGÓCIO
+    // LÓGICA DE NEGÓCIO - ATUALIZADA PARA NOVOS STATUS
     // =============================================
     function isEmployeeOnVacation(employeeId) {
         if (!employeeId) return false;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        return appState.vacations.some(v =>
-            v.employee_id === employeeId &&
-            v.status === 'Em Andamento' &&
-            new Date(v.start_date) <= today &&
-            new Date(v.end_date) >= today
-        );
+        // Verifica se o colaborador está de férias considerando os novos status
+        return appState.vacations.some(v => {
+            if (v.employee_id !== employeeId) return false;
+            
+            const start = new Date(v.start_date);
+            const end = new Date(v.end_date);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0);
+            
+            // Verifica se está dentro do período
+            const isInPeriod = start <= today && end >= today;
+            
+            // Status que indicam férias em andamento
+            const activeStatuses = ['Em Andamento', 'Férias iniciada'];
+            
+            // Se o status estiver na lista de ativos E estiver dentro do período
+            if (activeStatuses.includes(v.status) && isInPeriod) {
+                return true;
+            }
+            
+            // Se o status for "Férias não iniciada" mas já passou da data de início
+            if (v.status === 'Férias não iniciada' && today >= start && today <= end) {
+                return true;
+            }
+            
+            return false;
+        });
     }
 
     function getEmployeeVacationPeriod(employeeId) {
@@ -914,15 +962,37 @@
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const active = appState.vacations.find(v =>
-            v.employee_id === employeeId &&
-            v.status === 'Em Andamento' &&
-            new Date(v.start_date) <= today &&
-            new Date(v.end_date) >= today
-        );
+        const active = appState.vacations.find(v => {
+            if (v.employee_id !== employeeId) return false;
+            
+            const start = new Date(v.start_date);
+            const end = new Date(v.end_date);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0);
+            
+            // Verifica se está dentro do período
+            const isInPeriod = start <= today && end >= today;
+            
+            // Status que indicam férias em andamento
+            const activeStatuses = ['Em Andamento', 'Férias iniciada'];
+            
+            if (activeStatuses.includes(v.status) && isInPeriod) {
+                return true;
+            }
+            
+            if (v.status === 'Férias não iniciada' && today >= start && today <= end) {
+                return true;
+            }
+            
+            return false;
+        });
 
         if (active) {
-            return { start: active.start_date, end: active.end_date };
+            return { 
+                start: active.start_date, 
+                end: active.end_date,
+                status: active.status 
+            };
         }
         return null;
     }
@@ -995,10 +1065,14 @@
         const sorted = uniqueEmployees.sort((a, b) => a.name.localeCompare(b.name));
 
         let html = '';
+        let vacationCount = 0;
+        
         sorted.forEach(emp => {
             const onVacation = isEmployeeOnVacation(emp.id) || emp.status === 'Férias';
             const period = getEmployeeVacationPeriod(emp.id);
             const ext = getEmployeeExtension(emp.id);
+
+            if (onVacation) vacationCount++;
 
             // Ramal - todos da mesma cor
             let ramalHtml = '';
@@ -1008,10 +1082,19 @@
                 ramalHtml = `<span class="no-ramal"><i class="fas fa-minus-circle"></i> Sem ramal</span>`;
             }
 
-            // Férias
+            // Férias - com tooltip mostrando período e status
             let feriasHtml = '';
             if (onVacation) {
-                const title = period ? `Férias de ${formatDate(period.start)} a ${formatDate(period.end)}` : 'Em férias';
+                let title = 'Em férias';
+                if (period) {
+                    const statusMap = {
+                        'Em Andamento': 'Em andamento',
+                        'Férias iniciada': 'Iniciada',
+                        'Férias não iniciada': 'Não iniciada'
+                    };
+                    const statusText = statusMap[period.status] || period.status || '';
+                    title = `Férias: ${statusText} | ${formatDate(period.start)} a ${formatDate(period.end)}`;
+                }
                 feriasHtml = `<span class="vacation-indicator" title="${title}"><i class="fas fa-umbrella-beach"></i></span>`;
             } else {
                 feriasHtml = `<span style="color: #d0d8e0; font-size: 0.85rem;"><i class="far fa-circle"></i></span>`;
@@ -1030,11 +1113,21 @@
 
         tbody.innerHTML = html;
 
+        // Atualizar contador no header
+        const headerTitle = document.querySelector('.card-header h5');
+        if (headerTitle && vacationCount > 0) {
+            headerTitle.textContent = `Lista de Colaboradores (${vacationCount} em férias)`;
+        } else if (headerTitle) {
+            headerTitle.textContent = 'Lista de Colaboradores';
+        }
+
         // Aplicar filtro se houver
         const searchInput = document.getElementById('searchEmployees');
         if (searchInput && searchInput.value.trim()) {
             filterTable(searchInput.value.trim());
         }
+
+        console.log(`Renderizados ${sorted.length} colaboradores, ${vacationCount} em férias`);
     }
 
     // =============================================
@@ -1074,7 +1167,7 @@
     }
 
     console.log('Sistema de Colaboradores Record carregado com sucesso!');
-    console.log('Layout baseado no sistema de Ramais.');
+    console.log('Status de férias configurados: Férias não iniciada, Em Andamento, Férias iniciada, Concluído, Cancelado');
     </script>
 </body>
 </html>

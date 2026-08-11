@@ -866,564 +866,6 @@
             border-left: 4px solid #17a2b8 !important;
         }
 
-        /* =============================================
-           ESTILOS DO ORGANOGRAMA
-           ============================================= */
-        .org-container {
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 4px 30px rgba(0,0,0,0.08);
-            padding: 1.5rem 2rem 3rem;
-            margin-top: 2rem;
-        }
-
-        .org-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #e8ecf0;
-        }
-
-        .org-logo-area {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        .org-logo-box {
-            width: 66px;
-            height: 66px;
-            background: #1a2a4a;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            flex-shrink: 0;
-            border: 1px solid #d0d5db;
-        }
-
-        .org-logo-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .org-logo-text {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #1a2a4a;
-        }
-
-        .org-logo-text small {
-            font-weight: 400;
-            font-size: 0.65rem;
-            color: #7a8a9a;
-            display: block;
-            margin-top: -2px;
-        }
-
-        .org-stats {
-            font-size: 0.75rem;
-            color: #4a5a6a;
-            background: #f4f6f9;
-            padding: 0.3rem 1rem;
-            border-radius: 30px;
-            border: 1px solid #e8ecf0;
-        }
-
-        .org-stats strong {
-            color: #1a2a4a;
-        }
-
-        .org-search-bar {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-
-        .org-search-wrapper {
-            flex: 1;
-            min-width: 200px;
-            display: flex;
-            align-items: center;
-            background: #f4f6f9;
-            border-radius: 30px;
-            border: 1px solid #e8ecf0;
-            padding: 0 0.8rem;
-            transition: all 0.2s;
-        }
-
-        .org-search-wrapper:focus-within {
-            border-color: #2c5778;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(44,87,120,0.08);
-        }
-
-        .org-search-wrapper .icon {
-            color: #8a9aa8;
-            margin-right: 0.3rem;
-            font-size: 0.8rem;
-        }
-
-        .org-search-wrapper input {
-            border: none;
-            background: transparent;
-            padding: 0.5rem 0.2rem;
-            font-size: 0.85rem;
-            width: 100%;
-            outline: none;
-            color: #1a2a4a;
-        }
-
-        .org-search-wrapper input::placeholder {
-            color: #aab8c6;
-        }
-
-        .org-search-clear {
-            background: none;
-            border: none;
-            color: #aab8c6;
-            cursor: pointer;
-            font-size: 0.9rem;
-            padding: 0.2rem 0.4rem;
-            border-radius: 50%;
-            display: none;
-        }
-
-        .org-search-clear:hover {
-            background: #e8ecf0;
-            color: #1a2a4a;
-        }
-
-        .org-search-clear.visible {
-            display: block;
-        }
-
-        .org-result-count {
-            font-size: 0.75rem;
-            color: #6a7a8a;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-
-        .org-tree {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            padding: 0.5rem 0;
-        }
-
-        .root-node {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-
-        .org-node {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            position: relative;
-        }
-
-        .org-node-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem 0.8rem;
-            background: #fff;
-            border: 2px solid #d0d5db;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            min-width: 110px;
-            max-width: 160px;
-            min-height: 50px;
-            position: relative;
-            z-index: 2;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .org-node-card:hover {
-            background: #f7f9fc;
-            border-color: #b0b8c4;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-        }
-
-        .level-0 .org-node-card {
-            border-color: #1a2a4a;
-            border-width: 3px;
-            background: #eef2f7;
-            min-width: 150px;
-        }
-        .level-1 .org-node-card { border-color: #2c5778; border-width: 2.5px; }
-        .level-2 .org-node-card { border-color: #4a7a9c; }
-        .level-3 .org-node-card { border-color: #6b9ab8; }
-        .level-4 .org-node-card { border-color: #8fb4cc; }
-
-        .org-node-card .icon {
-            font-size: 0.4rem;
-            width: 0.9rem;
-            height: 0.9rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #2c5778;
-            background: #eef2f7;
-            border-radius: 50%;
-            border: 1px solid #dce4ed;
-            flex-shrink: 0;
-            transition: transform 0.3s ease;
-            position: absolute;
-            top: -8px;
-            right: -8px;
-        }
-
-        .org-node-card .icon.expanded {
-            transform: rotate(90deg);
-        }
-
-        .org-node-card .icon.leaf {
-            color: #b0c0ce;
-            background: transparent;
-            border-color: transparent;
-            font-size: 0.3rem;
-        }
-
-        .org-node-card .label {
-            font-weight: 600;
-            color: #1a2a4a;
-            font-size: 0.7rem;
-            line-height: 1.2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 0.05rem;
-            width: 100%;
-        }
-
-        .label .cargo {
-            font-weight: 700;
-            font-size: 0.6rem;
-            color: #1a2a4a;
-            order: 2;
-        }
-
-        .label .nome {
-            font-weight: 600;
-            color: #1a2a4a;
-            font-size: 0.75rem;
-            order: 1;
-        }
-
-        .label .detalhe {
-            font-weight: 400;
-            color: #6a7a8a;
-            font-size: 0.5rem;
-            background: #f0f2f5;
-            padding: 0.05rem 0.4rem;
-            border-radius: 20px;
-            order: 3;
-        }
-
-        .label .depto {
-            font-weight: 500;
-            color: #4a7a9c;
-            font-size: 0.5rem;
-            background: #e4edf5;
-            padding: 0.05rem 0.4rem;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            order: 4;
-        }
-
-        .org-highlight {
-            background: #ffdd77;
-            padding: 0 0.15rem;
-            border-radius: 3px;
-            font-weight: 700;
-        }
-
-        .org-children-wrap {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: wrap !important;
-            justify-content: center !important;
-            align-items: flex-start !important;
-            gap: 1.5rem 2.5rem !important;
-            padding-top: 1rem !important;
-            padding-bottom: 0.2rem !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-            max-height: 0 !important;
-            opacity: 0 !important;
-            overflow: hidden !important;
-            transition: max-height 0.5s ease, opacity 0.4s ease, padding 0.3s !important;
-            width: 100% !important;
-            position: relative !important;
-            border-left: none !important;
-            margin-left: 0 !important;
-        }
-
-        .org-children-wrap.open {
-            max-height: 5000px !important;
-            opacity: 1 !important;
-            padding-top: 1.2rem !important;
-            padding-bottom: 0.6rem !important;
-            display: flex !important;
-        }
-
-        .org-children-wrap::before {
-            content: '' !important;
-            display: block !important;
-            width: 2px !important;
-            height: 0.8rem !important;
-            background: #1a2a4a !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            z-index: 1 !important;
-        }
-
-        .org-children-wrap .org-node {
-            align-items: center !important;
-            width: auto !important;
-            padding-top: 0.4rem !important;
-            position: relative !important;
-            flex: 0 1 auto !important;
-        }
-
-        .org-children-wrap .org-node::before {
-            content: '' !important;
-            display: block !important;
-            width: 100% !important;
-            height: 2px !important;
-            background: #1a2a4a !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            z-index: 1 !important;
-        }
-
-        .org-children-wrap .org-node::after {
-            content: '' !important;
-            display: block !important;
-            width: 2px !important;
-            height: 0.4rem !important;
-            background: #1a2a4a !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            z-index: 1 !important;
-        }
-
-        .org-node.leaf .org-node-card {
-            background: rgba(255,255,255,0.6);
-            border-color: #d5dce4;
-            cursor: default;
-        }
-
-        .org-node.leaf .org-node-card:hover {
-            transform: none;
-            box-shadow: none;
-            background: rgba(255,255,255,0.6);
-        }
-
-        .org-node.hidden {
-            display: none !important;
-        }
-
-        @media (max-width: 768px) {
-            .org-container {
-                padding: 1rem;
-            }
-            .org-children-wrap {
-                gap: 1rem 1.5rem !important;
-            }
-            .org-node-card {
-                padding: 0.3rem 0.5rem;
-                min-height: 40px;
-                min-width: 80px;
-            }
-            .label .nome {
-                font-size: 0.65rem;
-            }
-            .label .cargo {
-                font-size: 0.55rem;
-            }
-            .org-logo-box {
-                width: 50px;
-                height: 50px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .org-container {
-                padding: 0.5rem;
-                border-radius: 8px;
-            }
-            .org-children-wrap {
-                gap: 0.5rem 0.8rem !important;
-                flex-direction: column !important;
-                align-items: center !important;
-            }
-            .org-node-card {
-                min-width: 60px;
-                padding: 0.2rem 0.4rem;
-                min-height: 32px;
-            }
-            .label .nome {
-                font-size: 0.55rem;
-            }
-            .label .cargo {
-                font-size: 0.45rem;
-            }
-            .org-children-wrap .org-node {
-                min-width: 50px !important;
-            }
-            .org-logo-box {
-                width: 44px;
-                height: 44px;
-            }
-        }
-
-        @media print {
-            .org-container {
-                box-shadow: none;
-                border: none;
-                padding: 0.2cm;
-                margin: 0;
-                background: #fff;
-                width: 100%;
-                min-height: 100vh;
-            }
-
-            .org-search-bar,
-            .org-search-clear,
-            .org-result-count,
-            .org-stats {
-                display: none !important;
-            }
-
-            .org-node-card {
-                box-shadow: none !important;
-                border: 2px solid #1a2a4a !important;
-                background: #fff !important;
-                transform: none !important;
-                cursor: default !important;
-                page-break-inside: avoid !important;
-                min-width: 100px !important;
-                max-width: 160px !important;
-                width: auto !important;
-                justify-content: center !important;
-                padding: 0.2rem 0.5rem !important;
-                min-height: 40px !important;
-                border-radius: 8px !important;
-                margin: 0.03rem 0 !important;
-                border-left: 4px solid #1a2a4a !important;
-                position: relative !important;
-                z-index: 5 !important;
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-            }
-
-            .org-node-card .icon {
-                display: none !important;
-            }
-
-            .org-children-wrap {
-                display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
-                align-items: flex-start !important;
-                justify-content: center !important;
-                max-height: 9999px !important;
-                opacity: 1 !important;
-                padding-top: 0.6rem !important;
-                padding-bottom: 0.1rem !important;
-                padding-left: 0 !important;
-                padding-right: 0 !important;
-                margin-left: 0 !important;
-                border-left: none !important;
-                width: 100% !important;
-                gap: 0.3rem 2.5rem !important;
-                overflow: visible !important;
-                position: relative !important;
-            }
-
-            .org-children-wrap::before {
-                content: '' !important;
-                display: block !important;
-                width: 3px !important;
-                height: 0.6rem !important;
-                background: #1a2a4a !important;
-                position: absolute !important;
-                top: 0 !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important;
-                z-index: 10 !important;
-                border-radius: 2px !important;
-            }
-
-            .org-children-wrap .org-node {
-                align-items: center !important;
-                width: auto !important;
-                padding-top: 0.3rem !important;
-                position: relative !important;
-                flex: 0 1 auto !important;
-                min-width: 80px !important;
-            }
-
-            .org-children-wrap .org-node::before {
-                content: '' !important;
-                display: block !important;
-                width: 100% !important;
-                height: 3px !important;
-                background: #1a2a4a !important;
-                position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
-                z-index: 10 !important;
-                border-radius: 2px !important;
-            }
-
-            .org-children-wrap .org-node:first-child::before {
-                display: none !important;
-            }
-
-            .org-children-wrap .org-node::after {
-                content: '' !important;
-                display: block !important;
-                width: 3px !important;
-                height: 0.3rem !important;
-                background: #1a2a4a !important;
-                position: absolute !important;
-                top: 0 !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important;
-                z-index: 10 !important;
-                border-radius: 2px !important;
-            }
-        }
-
         /* Estilos do Controle de Ponto */
         #pontoSection .ponto-container {
             max-width: 800px;
@@ -1685,7 +1127,6 @@
                 <li><a href="#vacations" data-section="vacations"><i class="fas fa-umbrella-beach"></i> <span>Férias</span></a></li>
                 <li><a href="#projects" data-section="projects"><i class="fas fa-tasks"></i> <span>Projetos</span></a></li>
                 <li><a href="#ponto" data-section="ponto"><i class="fas fa-clock"></i> <span>Controle de Ponto</span></a></li>
-                <li><a href="#org" data-section="org"><i class="fas fa-sitemap"></i> <span>Organograma</span></a></li>
             </ul>
         </nav>
 
@@ -2260,36 +1701,6 @@
                     </div>
                 </section>
 
-                <!-- Organograma Section -->
-                <section id="orgSection" class="section">
-                    <div class="org-container">
-                        <div class="org-header">
-                            <div class="org-logo-area">
-                                <div class="org-logo-box" id="orgLogoBox">
-                                    <span style="font-size:0.5rem;text-align:center;">LOGO</span>
-                                </div>
-                                <div class="org-logo-text">Record Guaíba <small>organograma hierárquico</small></div>
-                            </div>
-                            <div class="header-actions">
-                                <div class="org-stats">
-                                    👥 <strong id="orgTotalCount">0</strong> colaboradores
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="org-search-bar">
-                            <div class="org-search-wrapper">
-                                <span class="icon">🔍</span>
-                                <input type="text" id="orgSearchInput" placeholder="Buscar por nome, cargo ou departamento..." autocomplete="off">
-                                <button class="org-search-clear" id="orgSearchClear">✕</button>
-                            </div>
-                            <span class="org-result-count" id="orgResultCount">0 resultados</span>
-                        </div>
-
-                        <div class="org-tree" id="orgTree"></div>
-                    </div>
-                </section>
-
                 <!-- Modais -->
                 <!-- Modal Adicionar Colaborador -->
                 <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
@@ -2347,6 +1758,7 @@
                                             <option value="TI">TI</option>
                                             <option value="Técnica">Técnica</option>
                                             <option value="Transporte">Transporte</option>
+                                            <option value="Núcleo de Especiais">Núcleo de Especiais</option>
                                         </select>
                                     </div>
                                     <div class="mb-3">
@@ -2556,14 +1968,13 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="vacationStatus" class="form-label required-field">Status</label>
-<select class="form-select" id="vacationStatus" required>
-    <!-- ALTERAÇÃO: Status padrão agora é "Férias não iniciada" -->
-    <option value="Férias não iniciada" selected>Férias não iniciada</option>
-    <option value="Em Andamento">Em Andamento</option>
-    <option value="Férias iniciada">Férias iniciada</option>
-    <option value="Concluído">Concluído</option>
-    <option value="Cancelado">Cancelado</option>
-</select>
+                                        <select class="form-select" id="vacationStatus" required>
+                                            <option value="Férias não iniciada" selected>Férias não iniciada</option>
+                                            <option value="Em Andamento">Em Andamento</option>
+                                            <option value="Férias iniciada">Férias iniciada</option>
+                                            <option value="Concluído">Concluído</option>
+                                            <option value="Cancelado">Cancelado</option>
+                                        </select>
                                     </div>
                                 </form>
                             </div>
@@ -2746,40 +2157,27 @@
     };
 
     // =============================================
-    // ALERTAS DE FÉRIAS - MODIFICADO COM AUTO-VERIFICAÇÃO
+    // ALERTAS DE FÉRIAS - MODIFICADO: APENAS STATUS CONCLUÍDO OU CANCELADO NÃO APARECEM
     // =============================================
     const vacationAlerts = {
         alerts: [],
         isModalOpen: false,
-        hasShownInitialAlert: false, // Nova flag para controlar o alerta inicial
+        hasShownInitialAlert: false,
 
-        // Verifica se a férias está ativa (não vencida e não concluída)
+        // REGRA: Colaborador de férias SOMENTE NÃO aparece no campo Férias quando o status for Concluído ou Cancelado
+        // Portanto, a regra de "vencimento" foi removida. 
         isVacationActive: function(vacation) {
+            // NÃO aparece apenas se status for Concluído ou Cancelado
             if (vacation.status === 'Concluído') {
                 return false;
             }
-            
             if (vacation.status === 'Cancelado') {
                 return false;
             }
-
-            // Verifica se já passou 1 dia do término
-            const endDate = new Date(vacation.end_date);
-            endDate.setHours(0, 0, 0, 0);
-            
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            // Se já passou 1 dia do término, não é mais ativa
-            const daysAfterEnd = Math.floor((today - endDate) / (1000 * 60 * 60 * 24));
-            if (daysAfterEnd >= 1) {
-                return false;
-            }
-
+            // Todos os outros status são considerados ativos (inclusive os vencidos)
             return true;
         },
 
-        // Verifica se deve mostrar alerta de retorno
         shouldShowReturnAlert: function(vacation) {
             if (!this.isVacationActive(vacation)) {
                 return false;
@@ -2797,11 +2195,10 @@
             
             const daysUntilReturn = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
             
-            // Mostra alerta apenas se faltam 7 dias ou menos e ainda não venceu
-            return daysUntilReturn >= 0 && daysUntilReturn <= 7;
+            // Mostra alerta se faltam 7 dias ou menos (mesmo que já tenha vencido, ainda mostra)
+            return daysUntilReturn <= 7;
         },
 
-        // Verifica se deve mostrar alerta de bloqueio
         shouldShowBlockAlert: function(vacation) {
             if (!this.isVacationActive(vacation)) {
                 return false;
@@ -2819,7 +2216,6 @@
             
             const daysUntilStart = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
             
-            // Mostra alerta apenas se começa amanhã
             return daysUntilStart === 1;
         },
 
@@ -2830,7 +2226,7 @@
             const alerts = [];
 
             vacations.forEach(vacation => {
-                // Pula férias que não estão ativas
+                // Aplica a nova regra: só exclui se status for Concluído ou Cancelado
                 if (!this.isVacationActive(vacation)) {
                     return;
                 }
@@ -2844,13 +2240,33 @@
                     endDate.setHours(0, 0, 0, 0);
                     const daysUntilReturn = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
                     
+                    // Se já passou do término, mostra "atrasado"
+                    let message = '';
+                    let badgeText = '';
+                    let badgeClass = '';
+                    
+                    if (daysUntilReturn < 0) {
+                        const daysLate = Math.abs(daysUntilReturn);
+                        message = `Retorno das férias está atrasado em ${daysLate} ${daysLate === 1 ? 'dia' : 'dias'} (${this.formatDate(vacation.end_date)}) - LIBERE URGENTE os acessos no AD e Microsoft 365`;
+                        badgeText = `${daysLate}d ATRASO`;
+                        badgeClass = 'bg-danger';
+                    } else if (daysUntilReturn === 0) {
+                        message = `Retorna das férias HOJE (${this.formatDate(vacation.end_date)}) - Libere os acessos no AD e Microsoft 365`;
+                        badgeText = 'HOJE';
+                        badgeClass = 'bg-danger';
+                    } else {
+                        message = `Retorna das férias em ${daysUntilReturn} ${daysUntilReturn === 1 ? 'dia' : 'dias'} (${this.formatDate(vacation.end_date)}) - Libere os acessos no AD e Microsoft 365`;
+                        badgeText = `${daysUntilReturn}d`;
+                        badgeClass = daysUntilReturn <= 3 ? 'bg-warning' : 'bg-info';
+                    }
+                    
                     alerts.push({
                         type: 'retorno',
-                        message: `Retorna das férias em ${daysUntilReturn} ${daysUntilReturn === 1 ? 'dia' : 'dias'} (${this.formatDate(vacation.end_date)}) - Libere os acessos no AD e Microsoft 365`,
+                        message: message,
                         employeeName: employee.name,
                         returnDate: vacation.end_date,
                         daysUntilReturn: daysUntilReturn,
-                        priority: daysUntilReturn <= 3 ? 'high' : 'medium'
+                        priority: daysUntilReturn <= 0 ? 'urgent' : 'medium'
                     });
                 }
 
@@ -2870,10 +2286,8 @@
             this.alerts = alerts;
             this.updateAlertCounter(alerts.length);
             
-            // Mostra alerta de notificação se houver novos alertas e não foi mostrado ainda
             if (alerts.length > 0 && !this.hasShownInitialAlert) {
                 this.hasShownInitialAlert = true;
-                // Mostra o modal automaticamente após um pequeno delay
                 setTimeout(() => {
                     this.showVacationAlertsModal();
                 }, 1500);
@@ -2882,7 +2296,6 @@
             return alerts;
         },
 
-        // Nova função para verificar e mostrar alertas automaticamente
         checkAndShowAlerts: function(vacations, employees) {
             const alerts = this.checkVacationAlerts(vacations, employees);
             if (alerts.length > 0 && !this.hasShownInitialAlert) {
@@ -2925,13 +2338,15 @@
                 if (returnAlerts.length > 0) {
                     alertsHTML += '<h6 class="mb-3"><i class="fas fa-undo-alt me-2"></i>Retorno de Férias</h6>';
                     returnAlerts.forEach(alert => {
-                        const badgeClass = alert.daysUntilReturn <= 1 ? 'bg-danger' :
+                        const isLate = alert.daysUntilReturn < 0;
+                        const badgeText = isLate ? `${Math.abs(alert.daysUntilReturn)}d ATRASO` : 
+                                         alert.daysUntilReturn === 0 ? 'HOJE' : `${alert.daysUntilReturn}d`;
+                        const badgeClass = isLate ? 'bg-danger' : 
+                                         alert.daysUntilReturn <= 1 ? 'bg-danger' : 
                                          alert.daysUntilReturn <= 3 ? 'bg-warning' : 'bg-info';
-                        const badgeText = alert.daysUntilReturn === 0 ? 'HOJE' :
-                                        alert.daysUntilReturn === 1 ? '1 dia' : `${alert.daysUntilReturn} dias`;
 
                         alertsHTML += `
-                            <div class="vacation-alert-item alert-retorno">
+                            <div class="vacation-alert-item alert-retorno" style="${isLate ? 'border-left-color: #dc3545 !important; background-color: #fff5f5 !important;' : ''}">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <strong>${alert.employeeName}</strong>
@@ -2997,12 +2412,11 @@
                 vacationAlertButton.parentNode.replaceChild(newButton, vacationAlertButton);
 
                 newButton.addEventListener('click', () => {
-                    this.hasShownInitialAlert = true; // Marca como visto ao abrir manualmente
+                    this.hasShownInitialAlert = true;
                     this.showVacationAlertsModal();
                 });
             }
 
-            // Verificação a cada 30 segundos
             setInterval(() => {
                 this.checkVacationAlerts(appState.vacations, appState.employees);
             }, 30000);
@@ -3029,11 +2443,11 @@
             initializePonto();
             initializeAssetSelection();
             vacationAlerts.initialize();
-            initializeOrganograma();
 
             startAutoSync();
 
             console.log('Aplicação inicializada com sucesso!');
+            console.log('NOVA REGRA: Colaborador de férias SOMENTE NÃO aparece no campo Férias quando o status for Concluído ou Cancelado');
             showAlert('Sistema carregado com sucesso!', 'success', 3000);
 
         } catch (error) {
@@ -3095,9 +2509,6 @@
                     break;
                 case 'ponto':
                     initializePonto();
-                    break;
-                case 'org':
-                    // Organograma já é renderizado na inicialização
                     break;
             }
         }
@@ -3290,7 +2701,7 @@
     }
 
     // =============================================
-    // CARREGAMENTO DE DADOS - MODIFICADO
+    // CARREGAMENTO DE DADOS
     // =============================================
     async function loadAllData() {
         try {
@@ -3371,7 +2782,6 @@
             updateDashboardStats();
             updateCharts();
 
-            // VERIFICA E MOSTRA ALERTAS AUTOMATICAMENTE APÓS CARREGAR OS DADOS
             vacationAlerts.checkAndShowAlerts(appState.vacations, appState.employees);
 
             return true;
@@ -3391,7 +2801,6 @@
 
                     showAlert('Usando dados locais (backup). Conecte-se à internet para sincronizar.', 'warning');
                     
-                    // Também verifica com os dados do backup
                     vacationAlerts.checkAndShowAlerts(appState.vacations, appState.employees);
                     
                     return true;
@@ -3439,7 +2848,7 @@
     }
 
     // =============================================
-    // ATUALIZAÇÃO DA TABELA DE RAMAIS COM STATUS DE FÉRIAS - MODIFICADO
+    // ATUALIZAÇÃO DA TABELA DE RAMAIS - COM NOVA REGRA DE FÉRIAS
     // =============================================
     function updateExtensionsTable() {
         const tbody = document.getElementById('extensionsTableBody');
@@ -3452,10 +2861,11 @@
             return;
         }
 
-        // Cria um Set com os IDs dos colaboradores que estão em férias ativas
+        // Cria um Set com os IDs dos colaboradores que estão em férias ativas (status diferente de Concluído e Cancelado)
         const employeesOnVacation = new Set();
         appState.vacations.forEach(vac => {
-            if (vacationAlerts.isVacationActive(vac)) {
+            // REGRA: Só considera em férias se NÃO for Concluído e NÃO for Cancelado
+            if (vac.status !== 'Concluído' && vac.status !== 'Cancelado') {
                 employeesOnVacation.add(vac.employee_id);
             }
         });
@@ -3518,7 +2928,7 @@
     }
 
     // =============================================
-    // ATUALIZAÇÃO DA TABELA DE FÉRIAS - MODIFICADO
+    // ATUALIZAÇÃO DA TABELA DE FÉRIAS - COM NOVA REGRA
     // =============================================
     function updateVacationsTable() {
         const tbody = document.getElementById('vacationsTableBody');
@@ -3526,9 +2936,9 @@
 
         tbody.innerHTML = '';
 
-        // Filtra apenas férias ativas (não vencidas e não concluídas)
+        // REGRA: Mostra todas as férias EXCETO as que tem status Concluído ou Cancelado
         const activeVacations = appState.vacations.filter(vacation => {
-            return vacationAlerts.isVacationActive(vacation);
+            return vacation.status !== 'Concluído' && vacation.status !== 'Cancelado';
         });
 
         if (activeVacations.length === 0) {
@@ -3546,7 +2956,6 @@
             };
         });
 
-        // ORDENA POR PROGRESSO EM ORDEM DECRESCENTE (100% primeiro, depois 99%, etc.)
         vacationsWithEmployee.sort((a, b) => b.progress - a.progress);
 
         vacationsWithEmployee.forEach(vacation => {
@@ -3818,13 +3227,15 @@ function getStatusClass(status) {
     }
 
     // =============================================
-    // DASHBOARD - MODIFICADO PARA MANTER TODOS OS DADOS
+    // DASHBOARD
     // =============================================
     function updateDashboardStats() {
         const totalEmployees = appState.employees.length;
         const totalAssets = appState.assets.length;
-        // Conta todas as férias em andamento (independente de estarem vencidas ou não)
-        const onVacation = appState.vacations.filter(v => v.status === 'Em Andamento' || v.status === 'Férias iniciada').length;
+        // REGRA: Conta como "Em Férias" apenas os que tem status diferente de Concluído e Cancelado
+        const onVacation = appState.vacations.filter(v => 
+            v.status !== 'Concluído' && v.status !== 'Cancelado'
+        ).length;
         const pendingTasks = appState.projects.filter(p =>
             p.status === 'Em Andamento' || p.priority === 'Alta' || p.priority === 'Urgente'
         ).length;
@@ -3841,7 +3252,7 @@ function getStatusClass(status) {
     }
 
     // =============================================
-    // GRÁFICOS - MODIFICADO PARA MANTER TODOS OS DADOS
+    // GRÁFICOS - MODIFICADO PARA USAR A NOVA REGRA
     // =============================================
     function initializeCharts() {
         updateCharts();
@@ -3984,7 +3395,7 @@ function getStatusClass(status) {
         const ctx = document.getElementById('vacationRadarChart');
         if (!ctx) return;
 
-        // Usa todas as férias para o gráfico (incluindo concluídas e vencidas)
+        // Usa todas as férias para o gráfico
         const statusCounts = {
             'Solicitado': 0,
             'Aprovado': 0,
@@ -4043,7 +3454,6 @@ function getStatusClass(status) {
         const ctx = document.getElementById('vacationMonthChart');
         if (!ctx) return;
 
-        // Usa todas as férias para o gráfico
         const monthCounts = new Array(12).fill(0);
 
         appState.vacations.forEach(vacation => {
@@ -6178,7 +5588,7 @@ Departamento: ${department}
                 [],
                 ['Colaboradores:', appState.employees.length],
                 ['Ativos:', appState.assets.length],
-                ['Férias em Andamento:', appState.vacations.filter(v => v.status === 'Em Andamento' || v.status === 'Férias iniciada').length],
+                ['Férias em Andamento:', appState.vacations.filter(v => v.status !== 'Concluído' && v.status !== 'Cancelado').length],
                 ['Projetos em Andamento:', appState.projects.filter(p => p.status === 'Em Andamento').length]
             ];
 
@@ -6269,7 +5679,7 @@ Departamento: ${department}
     }
 
     // =============================================
-    // EXPORTAÇÃO DE RAMAIS PDF - MODIFICADO
+    // EXPORTAÇÃO DE RAMAIS PDF - COM NOVA REGRA
     // =============================================
 function exportExtensionsPDF() {
     if (appState.isExporting) return;
@@ -6316,7 +5726,14 @@ function exportExtensionsPDF() {
 
         const extensionsByDepartment = {};
 
-        // REMOVIDO: Não verificamos mais quem está de férias para a exportação
+        // REGRA: Só considera em férias se NÃO for Concluído e NÃO for Cancelado
+        const employeesOnVacation = new Set();
+        appState.vacations.forEach(vac => {
+            if (vac.status !== 'Concluído' && vac.status !== 'Cancelado') {
+                employeesOnVacation.add(vac.employee_id);
+            }
+        });
+
         if (appState && appState.extensions && appState.employees) {
             const employeesMap = {};
             appState.employees.forEach(emp => {
@@ -6334,6 +5751,7 @@ function exportExtensionsPDF() {
                     }
 
                     let displayName = formatName(employee.name);
+                    const isOnVacation = employeesOnVacation.has(employee.id);
 
                     if (extension.shared_employees && extension.shared_employees.trim() !== '') {
                         try {
@@ -6363,7 +5781,7 @@ function exportExtensionsPDF() {
                         number: extension.number || 'N/A',
                         department: department,
                         isShared: !!extension.shared_employees,
-                        // REMOVIDO: isOnVacation não é mais usado na exportação
+                        isOnVacation: isOnVacation
                     };
 
                     if (!extensionsByDepartment[department].some(ext =>
@@ -6396,7 +5814,7 @@ function exportExtensionsPDF() {
                                                 number: extension.number || 'N/A',
                                                 department: sharedDepartment,
                                                 isShared: true,
-                                                // REMOVIDO: isOnVacation não é mais usado
+                                                isOnVacation: isOnVacation
                                             });
                                         }
                                     }
@@ -6507,10 +5925,13 @@ function exportExtensionsPDF() {
                     doc.setFont(undefined, 'normal');
 
                     const maxCaracteresNome = 50;
-                    const nomeExibicao = extension.name.length > maxCaracteresNome ?
+                    let nomeExibicao = extension.name.length > maxCaracteresNome ?
                         extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
 
-                    // REMOVIDO: Não adiciona mais o indicador de férias no nome
+                    if (extension.isOnVacation) {
+                        nomeExibicao += ' ⚠️ FÉRIAS';
+                    }
+
                     doc.text(nomeExibicao, currentX + 2, currentDeptY + 2.5);
 
                     const larguraNumero = 9;
@@ -6603,10 +6024,13 @@ function exportExtensionsPDF() {
                     doc.setFont(undefined, 'normal');
 
                     const maxCaracteresNome = 30;
-                    const nomeExibicao = extension.name.length > maxCaracteresNome ?
+                    let nomeExibicao = extension.name.length > maxCaracteresNome ?
                         extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
 
-                    // REMOVIDO: Não adiciona mais o indicador de férias no nome
+                    if (extension.isOnVacation) {
+                        nomeExibicao += ' ⚠️FÉRIAS';
+                    }
+
                     doc.text(nomeExibicao, currentX + 1.5, currentDeptY + 2.3);
 
                     const larguraNumero = 9;
@@ -6715,10 +6139,13 @@ function exportExtensionsPDF() {
                         doc.setFont(undefined, 'normal');
 
                         const maxCaracteresNome = 35;
-                        const nomeExibicao = extension.name.length > maxCaracteresNome ?
+                        let nomeExibicao = extension.name.length > maxCaracteresNome ?
                             extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
 
-                        // REMOVIDO: Não adiciona mais o indicador de férias no nome
+                        if (extension.isOnVacation) {
+                            nomeExibicao += ' ⚠️FÉRIAS';
+                        }
+
                         doc.text(nomeExibicao, posX + 1.5, currentDeptY + 2.3);
 
                         const larguraNumero = 9;
@@ -6775,7 +6202,7 @@ function exportExtensionsPDF() {
     }
 }
     // =============================================
-    // EXPORTAÇÃO DE RAMAIS EXCEL - MODIFICADO
+    // EXPORTAÇÃO DE RAMAIS EXCEL - COM NOVA REGRA
     // =============================================
     function exportExtensionsExcel() {
         if (appState.isExporting) return;
@@ -6784,10 +6211,10 @@ function exportExtensionsPDF() {
         try {
             const wb = XLSX.utils.book_new();
 
-            // Cria um Set com os IDs dos colaboradores que estão em férias ativas
+            // REGRA: Só considera em férias se NÃO for Concluído e NÃO for Cancelado
             const employeesOnVacation = new Set();
             appState.vacations.forEach(vac => {
-                if (vacationAlerts.isVacationActive(vac)) {
+                if (vac.status !== 'Concluído' && vac.status !== 'Cancelado') {
                     employeesOnVacation.add(vac.employee_id);
                 }
             });
@@ -6916,7 +6343,7 @@ function exportExtensionsPDF() {
         }
     }
 
-    // FÉRIAS - Exporta todas as férias (incluindo concluídas) para o PDF
+    // FÉRIAS - Exporta todas as férias, incluindo Concluídas e Canceladas
     async function exportVacationsPDF() {
         if (appState.isExporting) return;
         setExportingState(true);
@@ -6964,7 +6391,6 @@ function exportExtensionsPDF() {
         }
     }
 
-    // FÉRIAS - Exporta todas as férias (incluindo concluídas) para o Excel
     function exportVacationsExcel() {
         if (appState.isExporting) return;
         setExportingState(true);
@@ -7072,629 +6498,11 @@ function exportExtensionsPDF() {
         }
     }
 
-    // =============================================
-    // ORGANOGRAMA
-    // =============================================
-    function initializeOrganograma() {
-        const logoUrl = 'https://raw.githubusercontent.com/Record-Guaiba/CONTROLE/refs/heads/main/LOGO.png';
-        const logoBox = document.getElementById('orgLogoBox');
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function() {
-            logoBox.innerHTML = '';
-            logoBox.style.background = 'transparent';
-            logoBox.style.padding = '2px';
-            logoBox.appendChild(img);
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'contain';
-            img.style.borderRadius = '6px';
-        };
-        img.onerror = function() {
-            logoBox.innerHTML = '<span style="font-size:0.5rem;text-align:center;">LOGO</span>';
-            logoBox.style.background = '#1a2a4a';
-            logoBox.style.color = '#fff';
-        };
-        img.src = logoUrl;
-
-        function capitalizeName(name) {
-            if (!name) return '';
-            return name.split(' ').map(part => {
-                const lower = part.toLowerCase();
-                if (['da','de','do','dos','das','e'].includes(lower)) return lower;
-                return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-            }).join(' ');
-        }
-
-        // Dados do organograma (mantido igual ao original)
-        const colaboradores = {
-            "Marcia Machado Daudt": [
-                { nome: "Alan Campos de Freitas", cargo: "Executivo (a) de Contas", depto: "Comercial" },
-                { nome: "Marcelo Silveira Goebel", cargo: "Executivo (a) de Contas", depto: "Comercial" },
-                { nome: "Ana Luiza Correa", cargo: "Executivo (a) de Contas", depto: "Comercial" },
-                { nome: "Fabiana Alminhana", cargo: "Analista Comercial", depto: "Comercial" },
-                { nome: "Francielle Machado da Rosa", cargo: "Auxiliar Comercial", depto: "Comercial" },
-                { nome: "Isabel Cristina Giusti da Silva", cargo: "Analista Comercial", depto: "Comercial" },
-                { nome: "Amanda De O. Moreira", cargo: "Assistente Comercial", depto: "Comercial" }
-            ],
-            "Tiago Peroni": [
-                { nome: "Gabriela Souza Valentim", cargo: "Assistente de Marketing", depto: "Marketing" },
-                { nome: "Rodrigo Chagas Freitas", cargo: "Analista de Criação", depto: "Marketing" },
-                { nome: "Thiago Wiedemann", cargo: "Analista de Marketing", depto: "Marketing" },
-                { nome: "Ester Vassoler", cargo: "Auxiliar de Mídias Sociais", depto: "Marketing" },
-                { nome: "Paôla Rodrigues dos Santos", cargo: "Aprendiz", depto: "Marketing" }
-            ],
-            "Operacional": [
-                { nome: "Adilson Luis Rosa Correa", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Cristiano Silva D Oliveira", cargo: "Auxiliar Câmera U.P.E.", depto: "Operacional" },
-                { nome: "Diego da Cruz Vieira", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Diego Frantz Medeiros", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Elizeu Rogerio Xavier do Canto", cargo: "Auxiliar Câmera U.P.E.", depto: "Operacional" },
-                { nome: "Flavio Luis dos Santos da Silva", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Francisco dos Anjos Rodrigues", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Gerson Luis Guimaraes Antunes", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Gerson Paz de Oliveira", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Hugo Rogerio Ramires de Souza", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "João Batista Verzani Laud", cargo: "Auxiliar Câmera U.P.E.", depto: "Operacional" },
-                { nome: "Jorge Luis da Silva", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Leonardo Ricardo Aguiar", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Lidio Gilberto Quintana Marques", cargo: "Auxiliar Câmera U.P.E.", depto: "Operacional" },
-                { nome: "Luiz Henrique Barcellos dos Santos", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Mauricio da Silva Silva", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Rafael Gomes Baptista", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Sandro Barzi", cargo: "Cinegrafista", depto: "Operacional" },
-                { nome: "Valdir Gomes de Freitas Junior", cargo: "Auxiliar Câmera U.P.E.", depto: "Operacional" },
-                { nome: "Wilson Baptista Junior", cargo: "Auxiliar Câmera U.P.E.", depto: "Operacional" },
-                { nome: "Edson da Rosa", cargo: "Auxiliar Câmera U.P.E.", depto: "Operacional" },
-                { nome: "Fabiano Nunes Ramos", cargo: "Operador de Áudio", depto: "Operacional" },
-                { nome: "Filipe Moll Konig", cargo: "Diretor de Imagens", depto: "Operacional" },
-                { nome: "Gerson Luis Vieira Lopes", cargo: "Editor de VT", depto: "Operacional" },
-                { nome: "Giovane Alves da Silva", cargo: "Editor de VT", depto: "Operacional" },
-                { nome: "Guilherme Silveira da Silva", cargo: "Operador de Áudio", depto: "Operacional" },
-                { nome: "Josemar Britto do Carmo", cargo: "Auxiliar Câmera U.P.E.", depto: "Operacional" },
-                { nome: "Mario Jorge Viana de Lima", cargo: "Auxiliar Câmera U.P.E.", depto: "Operacional" },
-                { nome: "Marluana Rospa Fernandes", cargo: "Editor de VT", depto: "Operacional" },
-                { nome: "Mauricio Vidal Vasconcelos", cargo: "Operador de Áudio", depto: "Operacional" },
-                { nome: "Nei Epifanio Pereira", cargo: "Editor de VT", depto: "Operacional" },
-                { nome: "Paulo da Silva Bandeira", cargo: "Almoxarife Técnico", depto: "Operacional" },
-                { nome: "Rodrigo Oliveira da Cruz", cargo: "Operador de VT", depto: "Operacional" },
-                { nome: "Vagner Machado Hanauer", cargo: "Assistente de Produção", depto: "Operacional" },
-                { nome: "Wagner Belloli Porto", cargo: "Editor de VT", depto: "Operacional" },
-                { nome: "Giljon Jaques", cargo: "Diretor de Imagens", depto: "Operacional" },
-                { nome: "Leandro Bones", cargo: "Almoxarife Técnico", depto: "Operacional" },
-                { nome: "Maureci Ferreira Pires", cargo: "Almoxarife Técnico", depto: "Operacional" },
-                { nome: "Marco Antonio Rodrigues Bregon", cargo: "Assistente de Produção", depto: "Operacional" },
-                { nome: "Jose Luis Villar Cardoso Junior", cargo: "Editor de VT", depto: "Operacional" },
-                { nome: "Marco Antonio Farias Oliveira Junior", cargo: "Editor de VT", depto: "Operacional" },
-                { nome: "Juan Vieira Molina", cargo: "Editor de Midia Audiovisual", depto: "Operacional" },
-                { nome: "Charles Renan Ferreira", cargo: "Arquivista de Tapes", depto: "Operacional" },
-                { nome: "Caio Cesar Araujo Rodrigues", cargo: "Operador de Caracteres", depto: "Operacional" },
-                { nome: "Wilza Gabriela Canto", cargo: "Operador de Caracteres", depto: "Operacional" },
-            ],
-            "Fabio Oliveira": [
-                { nome: "Carlos Alberto Grubel", cargo: "Técnico de Manutenção TV", depto: "Técnica" },
-                { nome: "José Pomina", cargo: "Técnico de Manutenção TV", depto: "Técnica" },
-                { nome: "Luiz Fernando Nascimento", cargo: "Eletricista", depto: "Técnica" },
-                { nome: "Samir Fonseca", cargo: "Técnico de Estação RRT", depto: "Técnica" },
-                { nome: "Thiago Nardon", cargo: "Técnico de Manutenção TV", depto: "Técnica" },
-                { nome: "Guilherme Strevenski Souza", cargo: "Auxiliar Técnico", depto: "Técnica" }
-            ],
-            "Guilherme Kepler": [
-                { nome: "Ana Julia Isse", cargo: "Editor(a) Chefe", depto: "Jornalismo" },
-                { nome: "Giovana Goularte Padilha", cargo: "Estagiária", depto: "Jornalismo" },
-                { nome: "Ana Rita Santanna Marini", cargo: "Editor (a) de Texto", depto: "Jornalismo" },
-                { nome: "Camila Rafaela de Oliveira Alemany", cargo: "Produtor (a) Executivo (a)", depto: "Jornalismo" },
-                { nome: "Fabio Andre Teixeira Lehmen", cargo: "Editor Executivo", depto: "Jornalismo" },
-                { nome: "Fernanda Oliveira Bierhals", cargo: "Editor (a) de Texto", depto: "Jornalismo" },
-                { nome: "Fernando Cesar Vianna", cargo: "Operador de Controle Mestre", depto: "Jornalismo" },
-                { nome: "Filipe Moll Konig", cargo: "Diretor de Imagens", depto: "Jornalismo" },
-                { nome: "Gabriel Costa Silveira", cargo: "Repórter Mojo", depto: "Jornalismo" },
-                { nome: "Leonardo Barcelos Lara", cargo: "Apresentador", depto: "Jornalismo" },
-                { nome: "Paola Bueno Soares", cargo: "Maquiador (a)", depto: "Jornalismo" },
-                { nome: "Rafael Silveira de Azevedo", cargo: "Editor de VT", depto: "Jornalismo" },
-                { nome: "Rodrigo dos Santos Oliveira", cargo: "Repórter Mojo", depto: "Jornalismo" },
-                { nome: "Tanira Bolivar Lebedeff", cargo: "Editor Executivo", depto: "Jornalismo" },
-                { nome: "Vinicius Maestri de Oliveira Freire", cargo: "Editor(a) Chefe", depto: "Jornalismo" },
-                { nome: "Vinicius Farias da Silva", cargo: "Editor Executivo", depto: "Jornalismo" },
-                { nome: "Carla Seabra", cargo: "Chefe de Produção", depto: "Jornalismo" },
-                { nome: "Alexsander Machado", cargo: "Chefe de Reportagem", depto: "Jornalismo" },
-                { nome: "Ana Luísa Procópio Corrêa", cargo: "Chefe de Reportagem", depto: "Jornalismo" },
-                { nome: "Bernardo Contri", cargo: "Estagiário", depto: "Jornalismo" },
-                { nome: "Júlia Lessa Sleifer", cargo: "Estagiária", depto: "Jornalismo" },
-                { nome: "Bruna Marçal Cabrera", cargo: "Pauteiro (a)", depto: "Jornalismo" },
-                { nome: "José Henrique Rosito Ferraro", cargo: "Chefe de Redação", depto: "Jornalismo" },
-                { nome: "Rosa Maria Torres Amaral", cargo: "Editor (a) de Texto", depto: "Jornalismo" },
-                { nome: "Tobias Gancedo de Araújo", cargo: "Pauteiro (a)", depto: "Jornalismo" },
-                { nome: "Vanessa Pires", cargo: "Apresentador Programa Cidade Alerta", depto: "Jornalismo" },
-                { nome: "Vitória Ledur Matos", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Alander Diaz", cargo: "Pauteiro (a)", depto: "Jornalismo" },
-                { nome: "Bruna Xavier", cargo: "Operador de VT", depto: "Jornalismo" },
-                { nome: "Cristiano Souto", cargo: "Editor de VT", depto: "Jornalismo" },
-                { nome: "Daiane Dalle Tese", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Eduardo Pinzon", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Elisângela de Andrade", cargo: "Operador de VT", depto: "Jornalismo" },
-                { nome: "Felipe Bueno", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Felipe Conte", cargo: "Produtor (a) Executivo (a)", depto: "Jornalismo" },
-                { nome: "Fernanda Espinelli", cargo: "Editor (a) de Texto", depto: "Jornalismo" },
-                { nome: "Giljon Jaques", cargo: "Diretor de Imagens", depto: "Jornalismo" },
-                { nome: "Igor Pereira", cargo: "Editor Executivo", depto: "Jornalismo" },
-                { nome: "Jerônimo Pires", cargo: "Editor(a) Chefe", depto: "Jornalismo" },
-                { nome: "Jéssica Weber", cargo: "Locutor Apresentador Animador", depto: "Jornalismo" },
-                { nome: "João Otávio Lobo", cargo: "Aprendiz", depto: "Jornalismo" },
-                { nome: "João Victor Trindade", cargo: "Estagiário", depto: "Jornalismo" },
-                { nome: "Joellen Soares", cargo: "Editor (a) de Texto", depto: "Jornalismo" },
-                { nome: "Léo Saballa Jr.", cargo: "Apresentador", depto: "Jornalismo" },
-                { nome: "Luísa Meimes", cargo: "Editor (a) de Texto", depto: "Jornalismo" },
-                { nome: "Millena Beatriz Preuss de Freitas", cargo: "Aprendiz", depto: "Jornalismo" },
-                { nome: "Pedro Stefanello", cargo: "Figurinista", depto: "Jornalismo" },
-                { nome: "Ricardo Azeredo", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Samuel Vettori", cargo: "Apresentador(a) Apresentador Balanço Geral", depto: "Jornalismo" },
-                { nome: "Carolina Silveira", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Felipe Machado", cargo: "Repórter Mojo", depto: "Jornalismo" },
-                { nome: "Henri Somensi", cargo: "Estagiário", depto: "Jornalismo" },
-                { nome: "Jonatha Bittencourt", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Laura Rolim", cargo: "Repórter Mojo", depto: "Jornalismo" },
-                { nome: "Liliane Pereira", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Marceli Dutra", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Marrone Silva", cargo: "Repórter Mojo", depto: "Jornalismo" },
-                { nome: "Vanessa Felippe", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Vitor Costa", cargo: "Repórter", depto: "Jornalismo" },
-                { nome: "Aldrey Dorneles Barbosa", cargo: "Editor (a) de Texto", depto: "Jornalismo" },
-                { nome: "Ediqueli Bianca da Silva", cargo: "Produtor (a) Executivo (a)", depto: "Jornalismo" },
-                { nome: "Everton André Batista Lopes", cargo: "Comunicador", depto: "Jornalismo" },
-                { nome: "Paula Fabyolla Joaquim Meza", cargo: "Produtor (a) Executivo (a)", depto: "Jornalismo" },
-                { nome: "Renato Gava Rodrigues", cargo: "Produtor (a) Executivo (a)", depto: "Jornalismo" },
-                { nome: "Vicenti Ciotta Lima", cargo: "Estagiário", depto: "Jornalismo" },
-                { nome: "Carmel Mostardeiro", cargo: "Editor(a) Chefe", depto: "Jornalismo" },
-                { nome: "Cristiana Jardim", cargo: "Maquiador (a)", depto: "Jornalismo" },
-                { nome: "Israel Alves Correa", cargo: "Produtor (a) Executivo (a)", depto: "Jornalismo" },
-                { nome: "Lucas Pires de Oliveira", cargo: "Produtor (a) Executivo (a)", depto: "Jornalismo" },
-                { nome: "Monique Matias", cargo: "Editor (a) de Texto", depto: "Jornalismo" },
-                { nome: "Natan Moreira Ramiro", cargo: "Aprendiz", depto: "Jornalismo" },
-                { nome: "Tiago Picolotto Martinez", cargo: "Pauteiro (a)", depto: "Jornalismo" }
-            ],
-            "Bernardo Barreiro": [
-                { nome: "Carlos Alberto Correa Sena", cargo: "Operador de Controle Mestre", depto: "Programação" },
-                { nome: "Eduardo Rodrigues de Souza", cargo: "Operador de Controle Mestre", depto: "Programação" },
-                { nome: "Filipe Selister e Silva", cargo: "Operador de Controle Mestre", depto: "Programação" },
-                { nome: "Julio Cesar da Silva Cunha", cargo: "Operador de Controle Mestre", depto: "Programação" },
-                { nome: "Reginaldo Nunes da Silva", cargo: "Operador de Controle Mestre", depto: "Programação" },
-            ],
-            "Vitor Hugo Silva": [
-                { nome: "Maria Eduarda Dornelles", cargo: "Auxiliar de Opec", depto: "Operações Comerciais" }
-            ],
-            "Valdir Stanzione": [
-                { nome: "Susi Silva", cargo: "Analista Contábil", depto: "Contabilidade" }
-            ],
-            "Débora Cruz de Anhaia": [
-                { nome: "Guilherme Teixeira", cargo: "Analista Financeiro", depto: "Financeiro" }
-            ],
-            "Fernanda d`Avila": [
-                { nome: "Carolina Monteiro Lopes", cargo: "Auxiliar de Recursos Humanos", depto: "Recursos Humanos" },
-                { nome: "Fábio Rubira", cargo: "Analista de Depto Pessoal", depto: "Recursos Humanos" },
-                { nome: "Millena Beatriz Preuss de Freitas", cargo: "Aprendiz", depto: "Recursos Humanos" }
-            ],
-            "Mauricio Godinho": [
-                { nome: "Adriano Resta", cargo: "Encarregado de Transporte", depto: "Transportes" },
-                { nome: "Miriam Marques", cargo: "Assistente de Diretoria", depto: "Diretoria" },
-                { nome: "Diva dos Santos Rodrigues", cargo: "Copeira", depto: "Diretoria" },
-                { nome: "Eliane da Silva Tatsch", cargo: "Auxiliar de Limpeza", depto: "Administração" },
-                { nome: "Suelen Ajardo", cargo: "Auxiliar de Limpeza", depto: "Administração" },
-                { nome: "Sabrina Carvalho", cargo: "Analista Administrativo(a)", depto: "Administração" },
-                { nome: "Amanda Pacheco", cargo: "Analista Administrativo(a)", depto: "Administração" },
-                { nome: "João Otávio Lobo", cargo: "Aprendiz", depto: "Administração" },
-                { nome: "Daisy Russo", cargo: "Analista Administrativo(a)", depto: "Administração" },
-                { nome: "Alexandre Franca Telles", cargo: "Motorista Executivo", depto: "Diretoria" },
-                { nome: "Equipe", cargo: "Serviços Gerais", depto: "Administração" },
-                { nome: "Equipe", cargo: "Vigilância", depto: "Administração" },
-                { nome: "Equipe", cargo: "Recepção", depto: "Administração" },
-                { nome: "Equipe", cargo: "Copa", depto: "Administração" }
-            ],
-            "Bruno Santos": [
-                { nome: "Amailson Gawlinski", cargo: "Assistente de Suporte", depto: "TI - Tecnologia da Informação" },
-                { nome: "Emerson Almeida Guimarães", cargo: "Aprendiz", depto: "TI - Tecnologia da Informação" }
-            ]
-        };
-
-        const supervisorCargo = {
-            "Marcia Machado Daudt": "Supervisora Comercial",
-            "Tiago Peroni": "Coordenador de Marketing",
-            "Fabio Oliveira": "Supervisor Técnico",
-            "Guilherme Kepler": "Gerente de Jornalismo",
-            "Bernardo Barreiro": "Diretor de Programação",
-            "Vitor Hugo Silva": "Coordenador de OPEC",
-            "Valdir Stanzione": "Coordenador Contábil",
-            "Débora Cruz de Anhaia": "Gerente Financeiro",
-            "Fernanda d`Avila": "Gerente de Recursos Humanos",
-            "Bruno Santos": "Supervisor de T.I."
-        };
-
-        const equipeOperacional = colaboradores["Operacional"];
-
-        const rawData = {
-            cargo: "Diretor Executivo",
-            nome: "Gustavo Paulus",
-            children: [{
-                cargo: "Diretor Institucional",
-                nome: "João Sílvio Silva",
-                children: [{
-                    cargo: "Diretor Comercial",
-                    nome: "Wellington Almeida Machado",
-                    children: [{
-                        cargo: supervisorCargo["Marcia Machado Daudt"],
-                        nome: "Marcia Machado Daudt",
-                        children: colaboradores["Marcia Machado Daudt"] || []
-                    },{
-                        cargo: supervisorCargo["Tiago Peroni"],
-                        nome: "Tiago Peroni",
-                        children: colaboradores["Tiago Peroni"] || []
-                    }]
-                }]
-            },{
-                cargo: "Diretor Administrativo",
-                nome: "Mauricio Godinho",
-                children: [
-                    {
-                        cargo: supervisorCargo["Guilherme Kepler"],
-                        nome: "Guilherme Kepler",
-                        children: colaboradores["Guilherme Kepler"] || []
-                    },
-                    {
-                        cargo: supervisorCargo["Bruno Santos"],
-                        nome: "Bruno Santos",
-                        children: colaboradores["Bruno Santos"] || []
-                    },
-                    { nome: "Adriano Resta", cargo: "Encarregado de Transporte", depto: "Transportes" },
-                    { nome: "Miriam Marques", cargo: "Assistente de Diretoria", depto: "Diretoria" },
-                    { nome: "Diva dos Santos Rodrigues", cargo: "Copeira", depto: "Diretoria" },
-                    { nome: "Eliane da Silva Tatsch", cargo: "Auxiliar de Limpeza", depto: "Administração" },
-                    { nome: "Suelen Ajardo", cargo: "Auxiliar de Limpeza", depto: "Administração" },
-                    { nome: "Sabrina Carvalho", cargo: "Analista Administrativo(a)", depto: "Administração" },
-                    { nome: "Amanda Pacheco", cargo: "Analista Administrativo(a)", depto: "Administração" },
-                    { nome: "João Otávio Lobo", cargo: "Aprendiz", depto: "Administração" },
-                    { nome: "Daisy Russo", cargo: "Analista Administrativo(a)", depto: "Administração" },
-                    { nome: "Alexandre Franca Telles", cargo: "Motorista Executivo", depto: "Diretoria" },
-                    { nome: "Equipe", cargo: "Serviços Gerais", depto: "Administração" },
-                    { nome: "Equipe", cargo: "Vigilância", depto: "Administração" },
-                    { nome: "Equipe", cargo: "Recepção", depto: "Administração" },
-                    { nome: "Equipe", cargo: "Copa", depto: "Administração" },
-                    {
-                        cargo: supervisorCargo["Débora Cruz de Anhaia"],
-                        nome: "Débora Cruz de Anhaia",
-                        children: colaboradores["Débora Cruz de Anhaia"] || []
-                    },
-                    {
-                        cargo: supervisorCargo["Fernanda d`Avila"],
-                        nome: "Fernanda d`Avila",
-                        children: colaboradores["Fernanda d`Avila"] || []
-                    },
-                    {
-                        cargo: "Coordenadora de Controladoria",
-                        nome: "Claudia Goncalves",
-                        children: []
-                    },
-                    {
-                        cargo: supervisorCargo["Vitor Hugo Silva"],
-                        nome: "Vitor Hugo Silva",
-                        children: colaboradores["Vitor Hugo Silva"] || []
-                    },
-                    {
-                        cargo: supervisorCargo["Valdir Stanzione"],
-                        nome: "Valdir Stanzione",
-                        children: colaboradores["Valdir Stanzione"] || []
-                    },
-                    {
-                        cargo: "Gerente de Operações e Engenharia",
-                        nome: "Diógenes Rodrigues",
-                        children: [
-                            {
-                                cargo: "Supervisor de Operações",
-                                nome: "Alexandre Soares Marques e Diogenes Fritsch de Moraes",
-                                depto: "Operacional",
-                                children: equipeOperacional
-                            },
-                            {
-                                cargo: supervisorCargo["Fabio Oliveira"],
-                                nome: "Fabio Oliveira",
-                                children: colaboradores["Fabio Oliveira"] || []
-                            }
-                        ]
-                    }
-                ]
-            },{
-                cargo: supervisorCargo["Bernardo Barreiro"],
-                nome: "Bernardo Barreiro",
-                children: colaboradores["Bernardo Barreiro"] || []
-            }]
-        };
-
-        function processNames(node) {
-            if (!node) return;
-            if (node.nome) node.nome = capitalizeName(node.nome);
-            if (Array.isArray(node.children)) {
-                node.children.forEach((child, idx) => {
-                    if (typeof child === 'object' && child !== null) processNames(child);
-                    else if (typeof child === 'string') {
-                        const parts = child.split(' - ');
-                        const nome = capitalizeName(parts[0] || '');
-                        const cargo = capitalizeName(parts[1] || parts[0] || '');
-                        node.children[idx] = { nome, cargo };
-                    }
-                });
-            }
-        }
-        processNames(rawData);
-
-        function deduplicateTree(node) {
-            if (!node) return;
-            if (Array.isArray(node.children)) {
-                const seen = new Set();
-                node.children = node.children.filter(child => {
-                    let key;
-                    if (typeof child === 'string') key = child.trim();
-                    else key = (child.nome || '') + '|' + (child.cargo || '');
-                    if (seen.has(key)) return false;
-                    seen.add(key);
-                    return true;
-                });
-                node.children.forEach(child => { if (typeof child === 'object') deduplicateTree(child); });
-            }
-        }
-        deduplicateTree(rawData);
-
-        function countAll(node) {
-            let count = 1;
-            if (Array.isArray(node.children)) {
-                node.children.forEach(child => {
-                    if (typeof child === 'string') count += 1;
-                    else count += countAll(child);
-                });
-            }
-            return count;
-        }
-        document.getElementById('orgTotalCount').textContent = countAll(rawData);
-
-        const treeContainer = document.getElementById('orgTree');
-        const allNodes = [];
-
-        function collectChildrenSearchText(node) {
-            let text = '';
-            if (Array.isArray(node.children)) {
-                node.children.forEach(child => {
-                    if (typeof child === 'object' && child !== null) {
-                        if (child.nome) text += ' ' + normalizeText(child.nome);
-                        if (child.cargo) text += ' ' + normalizeText(child.cargo);
-                        if (child.depto) text += ' ' + normalizeText(child.depto);
-                        if (child.detalhe) text += ' ' + normalizeText(child.detalhe);
-                        if (Array.isArray(child.children) && child.children.length > 0) {
-                            text += ' ' + collectChildrenSearchText(child);
-                        }
-                    }
-                });
-            }
-            return text;
-        }
-
-        function renderNode(nodeData, parentEl, level = 0, path = []) {
-            const nodeDiv = document.createElement('div');
-            nodeDiv.className = `org-node level-${Math.min(level, 4)}`;
-            nodeDiv.dataset.cargo = nodeData.cargo || '';
-            nodeDiv.dataset.nome = nodeData.nome || '';
-            nodeDiv.dataset.detalhe = nodeData.detalhe || '';
-            nodeDiv.dataset.depto = nodeData.depto || '';
-
-            const currentPath = [...path, nodeData.nome || nodeData.cargo || ''];
-            nodeDiv.dataset.path = currentPath.join(' → ');
-
-            let searchText = normalizeText([
-                nodeData.cargo || '',
-                nodeData.nome || '',
-                nodeData.detalhe || '',
-                nodeData.depto || '',
-                nodeDiv.dataset.path
-            ].join(' '));
-
-            if (Array.isArray(nodeData.children)) {
-                searchText += ' ' + collectChildrenSearchText(nodeData);
-            }
-            nodeDiv.dataset.searchText = searchText;
-
-            const card = document.createElement('div');
-            card.className = 'org-node-card';
-
-            const hasChildren = Array.isArray(nodeData.children) && nodeData.children.length > 0;
-
-            const icon = document.createElement('span');
-            icon.className = 'icon';
-            if (hasChildren) {
-                icon.textContent = '▶';
-            } else {
-                icon.textContent = '•';
-                icon.classList.add('leaf');
-                nodeDiv.classList.add('leaf');
-            }
-            card.appendChild(icon);
-
-            const label = document.createElement('span');
-            label.className = 'label';
-            let labelHtml = `<span class="nome">${nodeData.nome || ''}</span>`;
-            if (nodeData.cargo) labelHtml += `<span class="cargo">${nodeData.cargo}</span>`;
-            if (nodeData.detalhe) labelHtml += `<span class="detalhe">${nodeData.detalhe}</span>`;
-            if (nodeData.depto) labelHtml += `<span class="depto">${nodeData.depto}</span>`;
-            label.innerHTML = labelHtml;
-            card.appendChild(label);
-
-            nodeDiv.appendChild(card);
-            allNodes.push(nodeDiv);
-
-            const wrap = document.createElement('div');
-            wrap.className = 'org-children-wrap';
-
-            if (hasChildren) {
-                nodeData.children.forEach(child => renderNode(child, wrap, level + 1, currentPath));
-
-                if (level === 0) {
-                    wrap.classList.add('open');
-                    icon.classList.add('expanded');
-                }
-
-                card.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const w = this.parentElement.querySelector('.org-children-wrap');
-                    const ic = this.querySelector('.icon');
-                    if (!w) return;
-                    const isOpen = w.classList.contains('open');
-                    if (isOpen) {
-                        w.classList.remove('open');
-                        ic.classList.remove('expanded');
-                        ic.textContent = '▶';
-                    } else {
-                        w.classList.add('open');
-                        ic.classList.add('expanded');
-                        ic.textContent = '▶';
-                    }
-                });
-            } else {
-                wrap.style.display = 'none';
-            }
-
-            nodeDiv.appendChild(wrap);
-            parentEl.appendChild(nodeDiv);
-            return nodeDiv;
-        }
-
-        const root = document.createElement('div');
-        root.className = 'root-node';
-        treeContainer.appendChild(root);
-        renderNode(rawData, root, 0);
-
-        function closeDeep(el, level) {
-            const wraps = el.querySelectorAll(':scope > .org-node > .org-children-wrap');
-            if (level >= 1) {
-                wraps.forEach(w => {
-                    w.classList.remove('open');
-                    const card = w.parentElement.querySelector('.org-node-card');
-                    if (card) {
-                        const ic = card.querySelector('.icon');
-                        if (ic) { ic.classList.remove('expanded'); ic.textContent = '▶'; }
-                    }
-                });
-            }
-            const children = el.querySelectorAll(':scope > .org-node');
-            children.forEach(child => closeDeep(child, level + 1));
-        }
-        closeDeep(root, 0);
-
-        const searchInput = document.getElementById('orgSearchInput');
-        const searchClear = document.getElementById('orgSearchClear');
-        const resultCount = document.getElementById('orgResultCount');
-
-        function highlightText(text, term) {
-            if (!term || !text) return text;
-            const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-            return text.replace(regex, '<span class="org-highlight">$1</span>');
-        }
-
-        function expandAllParents(node) {
-            let current = node.parentElement;
-            while (current) {
-                if (current.classList && current.classList.contains('org-children-wrap')) {
-                    current.classList.add('open');
-                    const parentNode = current.parentElement;
-                    if (parentNode) {
-                        const card = parentNode.querySelector('.org-node-card');
-                        if (card) {
-                            const icon = card.querySelector('.icon');
-                            if (icon) {
-                                icon.classList.add('expanded');
-                                icon.textContent = '▶';
-                            }
-                        }
-                    }
-                }
-                current = current.parentElement;
-            }
-        }
-
-        function performSearch(term) {
-            term = normalizeText(term);
-            let visible = 0;
-
-            document.querySelectorAll('.org-highlight').forEach(el => el.replaceWith(el.textContent));
-
-            allNodes.forEach(node => {
-                const searchText = node.dataset.searchText || '';
-                const cargo = node.dataset.cargo || '';
-                const nome = node.dataset.nome || '';
-                const detalhe = node.dataset.detalhe || '';
-                const depto = node.dataset.depto || '';
-
-                if (!term) {
-                    node.classList.remove('hidden');
-                    const label = node.querySelector('.label');
-                    if (label) {
-                        let html = `<span class="nome">${nome}</span>`;
-                        if (cargo) html += `<span class="cargo">${cargo}</span>`;
-                        if (detalhe) html += `<span class="detalhe">${detalhe}</span>`;
-                        if (depto) html += `<span class="depto">${depto}</span>`;
-                        label.innerHTML = html;
-                    }
-                    visible++;
-                    return;
-                }
-
-                const match =
-                    searchText.includes(term) ||
-                    normalizeText(cargo).includes(term) ||
-                    normalizeText(nome).includes(term) ||
-                    normalizeText(depto).includes(term) ||
-                    normalizeText(detalhe).includes(term);
-
-                if (match) {
-                    node.classList.remove('hidden');
-                    visible++;
-
-                    const label = node.querySelector('.label');
-                    if (label) {
-                        let html = `<span class="nome">${highlightText(nome, term)}</span>`;
-                        if (cargo) html += `<span class="cargo">${highlightText(cargo, term)}</span>`;
-                        if (detalhe) html += `<span class="detalhe">${highlightText(detalhe, term)}</span>`;
-                        if (depto) html += `<span class="depto">${highlightText(depto, term)}</span>`;
-                        label.innerHTML = html;
-                    }
-
-                    expandAllParents(node);
-                } else {
-                    node.classList.add('hidden');
-                }
-            });
-
-            resultCount.textContent = `${visible} resultado${visible !== 1 ? 's' : ''}`;
-            searchClear.classList.toggle('visible', term.length > 0);
-        }
-
-        searchInput.addEventListener('input', function() { performSearch(this.value); });
-        searchClear.addEventListener('click', function() {
-            searchInput.value = '';
-            performSearch('');
-            searchInput.focus();
-        });
-
-        performSearch('');
-    }
-
-    function normalizeText(text) {
-        return (text || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-    }
-
     console.log('Sistema de Gestão Record carregado com sucesso!');
-    console.log('Organograma integrado com sucesso!');
-    console.log('Importação de férias CSV agora suporta os formatos: Colaborador;Início;Término;Status');
+    console.log('NOVA REGRA: Colaborador de férias SOMENTE NÃO aparece no campo Férias quando o status for Concluído ou Cancelado');
+    console.log('Importação de férias CSV suporta os formatos: Colaborador;Início;Término;Status');
     console.log('Suporta separadores por vírgula ou ponto e vírgula');
     console.log('Datas nos formatos DD/MM/YYYY, DD-MM-YYYY ou YYYY-MM-DD');
-    console.log('Regra de férias: após 1 dia vencido ou status Concluído, não aparece na lista nem nos alertas');
-    console.log('Notificações de férias são exibidas automaticamente ao carregar a página!');
-    console.log('Status padrão para novas férias: "Férias não iniciada"');
     </script>
 </body>
 </html>

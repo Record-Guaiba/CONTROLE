@@ -6008,7 +6008,7 @@ function exportExtensionsPDF() {
                     doc.setTextColor(107, 114, 128);
                     doc.setFont(undefined, 'normal');
 
-                    const maxCaracteresNome = 30;
+                    const maxCaracteresNome = 50;
                     const nomeExibicao = extension.name.length > maxCaracteresNome ?
                         extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
 
@@ -6120,7 +6120,7 @@ function exportExtensionsPDF() {
                         doc.setTextColor(107, 114, 128);
                         doc.setFont(undefined, 'normal');
 
-                        const maxCaracteresNome = 35;
+                        const maxCaracteresNome = 50;
                         const nomeExibicao = extension.name.length > maxCaracteresNome ?
                             extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
 

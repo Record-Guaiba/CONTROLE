@@ -2448,6 +2448,7 @@
 
             console.log('Aplicação inicializada com sucesso!');
             console.log('NOVA REGRA: Colaborador de férias SOMENTE NÃO aparece no campo Férias quando o status for Concluído ou Cancelado');
+            console.log('REGRAS DE EXPORTAÇÃO PDF: Férias NÃO são exibidas na lista de ramais');
             showAlert('Sistema carregado com sucesso!', 'success', 3000);
 
         } catch (error) {
@@ -5679,7 +5680,7 @@ Departamento: ${department}
     }
 
     // =============================================
-    // EXPORTAÇÃO DE RAMAIS PDF - COM NOVA REGRA
+    // EXPORTAÇÃO DE RAMAIS PDF - REGRA: FÉRIAS NÃO SÃO EXIBIDAS
     // =============================================
 function exportExtensionsPDF() {
     if (appState.isExporting) return;
@@ -5706,12 +5707,6 @@ function exportExtensionsPDF() {
             return fullName.trim();
         }
 
-        function getFirstName(fullName) {
-            if (!fullName || fullName === 'N/A') return 'N/A';
-            const names = fullName.trim().split(/\s+/);
-            return names[0];
-        }
-
         doc.setFillColor(bluePalette.primary[0], bluePalette.primary[1], bluePalette.primary[2]);
         doc.rect(0, 0, pageWidth, 16, 'F');
 
@@ -5726,13 +5721,9 @@ function exportExtensionsPDF() {
 
         const extensionsByDepartment = {};
 
-        // REGRA: Só considera em férias se NÃO for Concluído e NÃO for Cancelado
-        const employeesOnVacation = new Set();
-        appState.vacations.forEach(vac => {
-            if (vac.status !== 'Concluído' && vac.status !== 'Cancelado') {
-                employeesOnVacation.add(vac.employee_id);
-            }
-        });
+        // REGRA: Férias NÃO devem ser exibidas na lista de ramais
+        // Portanto, ignoramos completamente a verificação de férias
+        // Apenas listamos todos os ramais normalmente
 
         if (appState && appState.extensions && appState.employees) {
             const employeesMap = {};
@@ -5751,7 +5742,6 @@ function exportExtensionsPDF() {
                     }
 
                     let displayName = formatName(employee.name);
-                    const isOnVacation = employeesOnVacation.has(employee.id);
 
                     if (extension.shared_employees && extension.shared_employees.trim() !== '') {
                         try {
@@ -5780,8 +5770,7 @@ function exportExtensionsPDF() {
                         fullName: displayName,
                         number: extension.number || 'N/A',
                         department: department,
-                        isShared: !!extension.shared_employees,
-                        isOnVacation: isOnVacation
+                        isShared: !!extension.shared_employees
                     };
 
                     if (!extensionsByDepartment[department].some(ext =>
@@ -5813,8 +5802,7 @@ function exportExtensionsPDF() {
                                                 fullName: displayName,
                                                 number: extension.number || 'N/A',
                                                 department: sharedDepartment,
-                                                isShared: true,
-                                                isOnVacation: isOnVacation
+                                                isShared: true
                                             });
                                         }
                                     }
@@ -5925,13 +5913,10 @@ function exportExtensionsPDF() {
                     doc.setFont(undefined, 'normal');
 
                     const maxCaracteresNome = 50;
-                    let nomeExibicao = extension.name.length > maxCaracteresNome ?
+                    const nomeExibicao = extension.name.length > maxCaracteresNome ?
                         extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
 
-                    if (extension.isOnVacation) {
-                        nomeExibicao += ' ⚠️ FÉRIAS';
-                    }
-
+                    // NÃO exibe indicador de férias
                     doc.text(nomeExibicao, currentX + 2, currentDeptY + 2.5);
 
                     const larguraNumero = 9;
@@ -6024,13 +6009,10 @@ function exportExtensionsPDF() {
                     doc.setFont(undefined, 'normal');
 
                     const maxCaracteresNome = 30;
-                    let nomeExibicao = extension.name.length > maxCaracteresNome ?
+                    const nomeExibicao = extension.name.length > maxCaracteresNome ?
                         extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
 
-                    if (extension.isOnVacation) {
-                        nomeExibicao += ' ⚠️FÉRIAS';
-                    }
-
+                    // NÃO exibe indicador de férias
                     doc.text(nomeExibicao, currentX + 1.5, currentDeptY + 2.3);
 
                     const larguraNumero = 9;
@@ -6139,13 +6121,10 @@ function exportExtensionsPDF() {
                         doc.setFont(undefined, 'normal');
 
                         const maxCaracteresNome = 35;
-                        let nomeExibicao = extension.name.length > maxCaracteresNome ?
+                        const nomeExibicao = extension.name.length > maxCaracteresNome ?
                             extension.name.substring(0, maxCaracteresNome - 1) + '...' : extension.name;
 
-                        if (extension.isOnVacation) {
-                            nomeExibicao += ' ⚠️FÉRIAS';
-                        }
-
+                        // NÃO exibe indicador de férias
                         doc.text(nomeExibicao, posX + 1.5, currentDeptY + 2.3);
 
                         const larguraNumero = 9;
@@ -6202,7 +6181,7 @@ function exportExtensionsPDF() {
     }
 }
     // =============================================
-    // EXPORTAÇÃO DE RAMAIS EXCEL - COM NOVA REGRA
+    // EXPORTAÇÃO DE RAMAIS EXCEL - REGRA: FÉRIAS NÃO SÃO EXIBIDAS
     // =============================================
     function exportExtensionsExcel() {
         if (appState.isExporting) return;
@@ -6211,13 +6190,8 @@ function exportExtensionsPDF() {
         try {
             const wb = XLSX.utils.book_new();
 
-            // REGRA: Só considera em férias se NÃO for Concluído e NÃO for Cancelado
-            const employeesOnVacation = new Set();
-            appState.vacations.forEach(vac => {
-                if (vac.status !== 'Concluído' && vac.status !== 'Cancelado') {
-                    employeesOnVacation.add(vac.employee_id);
-                }
-            });
+            // REGRA: Férias NÃO são exibidas na lista de ramais
+            // Portanto, não verificamos se o colaborador está de férias
 
             const data = appState.extensions.map(extension => {
                 const employee = appState.employees.find(emp => emp.id === extension.employee_id);
@@ -6232,18 +6206,13 @@ function exportExtensionsPDF() {
                     sharedNames = names.join(', ');
                 }
 
-                let status = extension.status;
-                if (employee && employeesOnVacation.has(employee.id)) {
-                    status = 'Férias';
-                }
-
                 return {
                     'Ramal': extension.number,
                     'Responsável': employee ? employee.name : 'N/A',
                     'Departamento': employee ? employee.department : 'N/A',
                     'Compartilhado': shared,
                     'Compartilhado com': sharedNames || 'N/A',
-                    'Status': status
+                    'Status': extension.status
                 };
             });
 
@@ -6500,9 +6469,8 @@ function exportExtensionsPDF() {
 
     console.log('Sistema de Gestão Record carregado com sucesso!');
     console.log('NOVA REGRA: Colaborador de férias SOMENTE NÃO aparece no campo Férias quando o status for Concluído ou Cancelado');
+    console.log('REGRAS DE EXPORTAÇÃO: Férias NÃO são exibidas na lista de ramais (PDF e Excel)');
     console.log('Importação de férias CSV suporta os formatos: Colaborador;Início;Término;Status');
-    console.log('Suporta separadores por vírgula ou ponto e vírgula');
-    console.log('Datas nos formatos DD/MM/YYYY, DD-MM-YYYY ou YYYY-MM-DD');
     </script>
 </body>
 </html>

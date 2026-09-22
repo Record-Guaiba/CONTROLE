@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Editor de Assinaturas</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.17/dist/interact.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            padding: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 1300px; margin: 0 auto; background: #ffffff;
+            padding: 20px 25px; border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+        }
+        h2 {
+            color: #1a2a4a; font-size: 22px; margin-bottom: 20px;
+            border-bottom: 4px solid #1a2a4a; padding-bottom: 12px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        h2::before { content: "✉️"; font-size: 24px; }
+        .editor-layout {
+            display: grid; grid-template-columns: 340px 1fr; gap: 25px;
+        }
+        @media (max-width: 1024px) {
+            .editor-layout { grid-template-columns: 1fr; }
+            .control-panel { max-height: none; overflow-y: visible; }
+        }
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .control-panel { padding: 18px; }
+            .preview-area { padding: 20px; }
+            .input-row { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 480px) {
+            .input-row { grid-template-columns: 1fr; }
+            .format-selector-group { grid-template-columns: 1fr; }
+        }
+        .control-panel {
+            background: #f8f9fa; border-radius: 12px; padding: 20px;
+            border: 2px solid #e8e8e8; max-height: 800px; overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        .control-panel::-webkit-scrollbar { width: 6px; }
+        .control-panel::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 3px; }
+        .control-panel::-webkit-scrollbar-thumb { background: #1a2a4a; border-radius: 3px; }
+        .control-panel h3 {
+            font-size: 16px; color: #1a2a4a; margin-bottom: 16px;
+            padding-bottom: 10px; border-bottom: 2px solid #e0e0e0;
+        }
+        .control-group {
+            margin-bottom: 14px; padding-bottom: 12px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .control-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .control-group label {
+            display: block; font-weight: 600; color: #1a2a4a;
+            font-size: 13px; margin-bottom: 5px;
+        }
+        .control-group .control-row {
+            display: flex; gap: 8px; align-items: center;
+            flex-wrap: wrap; margin-top: 3px;
+        }
+        .control-group .control-row label {
+            font-weight: 500; font-size: 11px; color: #555;
+            margin-bottom: 0; min-width: 40px;
+        }
+        .control-group input[type="range"] {
+            flex: 1; min-width: 80px; height: 5px;
+            -webkit-appearance: none; appearance: none;
+            background: #d0d7e6; border-radius: 3px; outline: none;
+        }
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 14px; height: 14px; border-radius: 50%;
+            background: #1a2a4a; cursor: pointer; transition: all 0.2s;
+        }
+        .control-group input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1); background: #4a5d8a;
+        }
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 14px; height: 14px; border-radius: 50%;
+            background: #1a2a4a; cursor: pointer; border: none;
+        }
+        .control-group input[type="number"] {
+            width: 70px; padding: 3px 6px; border: 2px solid #d0d7e6;
+            border-radius: 5px; font-size: 12px; background: white;
+            transition: border-color 0.3s;
+        }
+        .control-group input[type="number"]:focus {
+            border-color: #1a2a4a; outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 42, 74, 0.12);
+        }
+        .control-group .value-display {
+            font-size: 12px; color: #1a2a4a; font-weight: 700;
+            min-width: 30px; text-align: center; background: white;
+            padding: 2px 6px; border-radius: 4px; border: 1px solid #e0e0e0;
+        }
+        .control-group .control-hint {
+            font-size: 10px; color: #888; margin-top: 3px; padding-left: 4px;
+        }
+        .format-selector-group {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;
+        }
+        .format-selector-item {
+            background: white; border-radius: 8px; padding: 10px 12px;
+            border: 2px solid #e0e0e0; transition: all 0.3s;
+        }
+        .format-selector-item:hover { border-color: #b0b8c8; }
+        .format-selector-item .item-label {
+            font-size: 11px; font-weight: 600; color: #333;
+            display: block; margin-bottom: 5px;
+        }
+        .format-selector-item .format-buttons { display: flex; gap: 5px; }
+        .format-selector-item .format-btn-small {
+            padding: 3px 12px; border: 2px solid #ccc; border-radius: 4px;
+            background: white; cursor: pointer; font-weight: 600;
+            font-size: 10px; transition: all 0.3s; flex: 1;
+        }
+        .format-selector-item .format-btn-small:hover {
+            border-color: #1a2a4a; background: #f0f4ff;
+        }
+        .format-selector-item .format-btn-small.active {
+            border-color: #1a2a4a; background: #1a2a4a; color: white;
+        }
+        .format-selector-item .format-btn-small.gif-btn {
+            border-color: #e67e22; color: #e67e22;
+        }
+        .format-selector-item .format-btn-small.gif-btn.active {
+            background: #e67e22; color: white; border-color: #e67e22;
+        }
+        .toggle-container { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
+        .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .3s; border-radius: 24px;
+        }
+        .toggle-slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px;
+            left: 3px; bottom: 3px; background-color: white;
+            transition: .3s; border-radius: 50%;
+        }
+        .toggle-switch input:checked+.toggle-slider { background-color: #1a2a4a; }
+        .toggle-switch input:checked+.toggle-slider:before { transform: translateX(20px); }
+        .toggle-label { font-weight: 600; font-size: 13px; color: #1a2a4a; }
+        .toggle-label .status { color: #5A6E9D; }
+        .preview-area {
+            background: #ffffff; border-radius: 12px; border: 2px solid #e8e8e8;
+            padding: 20px 25px; display: flex; flex-direction: column;
+            align-items: center; min-height: 380px; position: relative;
+        }
+        .signature-editor {
+            position: relative; border: 3px dashed #5A6E9D;
+            border-radius: 10px; padding: 20px; background: #fafbfc;
+            transition: all 0.3s; min-height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: auto; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            width: 100%;
+        }
+        .signature-editor:hover {
+            border-color: #8e44ad;
+            box-shadow: 0 2px 20px rgba(90, 110, 157, 0.12);
+        }
+        #previewContainer {
+            display: flex; align-items: center; justify-content: center; width: 100%;
+        }
+        #previewContainer .signature-table {
+            outline: 3px solid #2196F3 !important;
+            outline-offset: 4px !important; border-radius: 4px !important;
+            position: relative !important;
+            transform: scale(1.6);
+            transform-origin: center center;
+            margin: 25px auto;
+        }
+        #previewContainer .signature-table::after {
+            content: "📏 " attr(width) " × " attr(height);
+            position: absolute; bottom: -26px; left: 50%;
+            transform: translateX(-50%); font-size: 9px;
+            color: #2196F3; font-weight: 600;
+            background: rgba(33, 150, 243, 0.1);
+            padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+        }
+        .signature-table .cargo { text-transform: uppercase !important; }
+        .signature-table .contato a,
+        .signature-table .contato .texto,
+        .signature-table .destaque-negrito { text-transform: lowercase !important; }
+
+        .draggable-element {
+            cursor: grab; transition: box-shadow 0.2s;
+            user-select: none; position: relative; z-index: 2;
+        }
+        .draggable-element:hover { box-shadow: 0 0 20px rgba(90, 110, 157, 0.15); }
+        .draggable-element:active { cursor: grabbing; }
+        .draggable-element.dragging { z-index: 999 !important; }
+        .draggable-element .drag-indicator {
+            position: absolute; top: -10px; right: -10px;
+            background: #5A6E9D; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 9px;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s;
+            pointer-events: none; z-index: 1000;
+        }
+        .draggable-element:hover .drag-indicator { opacity: 1; }
+
+        .signature-table {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            border-collapse: collapse; background: #ffffff;
+            table-layout: fixed; overflow: visible;
+            transition: all 0.1s ease; border-radius: 4px;
+        }
+        .signature-table td { border: none; padding: 0; vertical-align: middle; }
+        .signature-table .logo-cell { vertical-align: middle; text-align: center; }
+        .signature-table .logo-cell .logo-wrapper {
+            width: 100%; display: flex; align-items: center; justify-content: center;
+        }
+        .signature-table .logo-cell img {
+            width: 100%; height: auto; display: block; object-fit: contain;
+        }
+        .signature-table .anuncio-cell { vertical-align: middle; text-align: center; }
+        .signature-table .anuncio-cell .anuncio-wrapper {
+            width: 100%; display: flex; align-items: center; justify-content: center;
+        }
+        .signature-table .anuncio-cell img {
+            width: 100%; height: auto; display: block; object-fit: contain;
+        }
+        .signature-table .info-cell {
+            vertical-align: middle; width: auto; padding: 0 6px; position: relative;
+        }
+        .signature-table .nome {
+            font-weight: 700; color: #5A6E9D;
+            white-space: nowrap; display: inline-block;
+        }
+        .signature-table .cargo {
+            font-weight: 600; color: #5A6E9D;
+            white-space: nowrap; display: inline-block;
+        }
+        .signature-table .cargo-area { display: block; max-width: 100%; }
+
+        /* ============================================================
+           ✅ CORREÇÃO PRINCIPAL:
+           O <a> do e-mail vira inline-flex com align-items: baseline.
+           Assim o <span>bold (agawlinski) e o texto (@recordguaiba.tv.br)
+           ficam OBRIGATORIAMENTE alinhados pela mesma baseline,
+           tanto no navegador quanto no html2canvas.
+           ============================================================ */
+        .signature-table .contato {
+            color: #5A6E9D;
+            display: flex;
+            align-items: center;
+            line-height: 1.3;
+            white-space: nowrap;
+        }
+        .signature-table .contato a {
+            color: #5A6E9D;
+            text-decoration: none;
+            font-weight: 500;
+            line-height: 1.3;
+            white-space: nowrap;
+            display: inline-flex;      /* ✅ força alinhamento por flex */
+            align-items: baseline;     /* ✅ baseline = todos na mesma linha */
+        }
+        .signature-table .contato .texto {
+            color: #5A6E9D;
+            line-height: 1.3;
+            white-space: nowrap;
+            display: inline-flex;      /* ✅ mesmo tratamento no telefone/celular */
+            align-items: baseline;
+        }
+        .signature-table .contato a:hover { text-decoration: underline; }
+        .signature-table .destaque-negrito {
+            font-weight: 700;
+            line-height: inherit;
+            /* ✅ sem display, sem vertical-align — fica como flex item */
+        }
+        .signature-table .icone-redondo {
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 50%; background-color: #5A6E9D; color: #ffffff;
+            flex-shrink: 0;
+        }
+        .signature-table .icone-redondo i {
+            line-height: 1; color: #ffffff;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-primary {
+            background: #5A6E9D; color: white; border: none;
+            padding: 10px 20px; border-radius: 7px; font-weight: 600;
+            font-size: 13px; cursor: pointer; transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            background: #4a5d8a; transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(90, 110, 157, 0.3);
+        }
+        .btn-success {
+            background: #27ae60; color: white; border: none;
+            padding: 10px 20px; border-radius: 7px; font-weight: 600;
+            font-size: 13px; cursor: pointer; transition: all 0.3s;
+        }
+        .btn-success:hover {
+            background: #219a52; transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+        .btn-danger {
+            background: #e74c3c; color: white; border: none;
+            padding: 10px 20px; border-radius: 7px; font-weight: 600;
+            font-size: 13px; cursor: pointer; transition: all 0.3s;
+        }
+        .btn-danger:hover {
+            background: #c0392b; transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+        .btn-warning {
+            background: #f39c12; color: white; border: none;
+            padding: 10px 20px; border-radius: 7px; font-weight: 600;
+            font-size: 13px; cursor: pointer; transition: all 0.3s;
+        }
+        .btn-warning:hover {
+            background: #e08e0b; transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+        }
+        .btn-purple {
+            background: #8e44ad; color: white; border: none;
+            padding: 10px 20px; border-radius: 7px; font-weight: 600;
+            font-size: 13px; cursor: pointer; transition: all 0.3s;
+        }
+        .btn-purple:hover {
+            background: #7d3c98; transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(142, 68, 173, 0.3);
+        }
+        .editor-actions {
+            display: flex; gap: 10px; flex-wrap: wrap;
+            margin-top: 16px; padding-top: 16px;
+            border-top: 2px solid #e8e8e8; width: 100%; justify-content: center;
+        }
+        .editor-actions button { padding: 10px 18px; font-size: 13px; }
+        .contatos-section {
+            margin-top: 25px; padding-top: 20px; border-top: 4px solid #5A6E9D;
+        }
+        .contatos-section .section-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 16px;
+        }
+        .contatos-section .section-header h3 { font-size: 18px; color: #2c3e50; }
+        .contatos-section .section-header .badge {
+            background: #5A6E9D; color: white; padding: 3px 12px;
+            border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+        .table-wrapper {
+            overflow-x: auto; margin: 12px 0;
+            border-radius: 10px; border: 2px solid #e8e8e8;
+        }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; }
+        th {
+            background: #5A6E9D; color: white; padding: 10px 14px;
+            text-align: left; font-weight: 600; font-size: 12px; white-space: nowrap;
+        }
+        td { padding: 8px 14px; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+        tr:hover { background: #f8f9fa; }
+        .input-row {
+            display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto auto;
+            gap: 10px; margin-bottom: 16px; align-items: end;
+        }
+        @media (max-width: 1024px) { .input-row { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 600px) { .input-row { grid-template-columns: 1fr; } }
+        .input-row input {
+            padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 7px;
+            font-size: 13px; transition: all 0.3s; background: white; height: 38px;
+        }
+        .input-row input:focus {
+            border-color: #5A6E9D; outline: none;
+            box-shadow: 0 0 0 3px rgba(90, 110, 157, 0.12);
+        }
+        .input-row input.autocompletado { border-color: #27ae60; background: #f0fff4; }
+        .input-row input.autocompletado-telefone { border-color: #27ae60; background: #f0fff4; }
+        .input-row button {
+            padding: 8px 18px; background: #5A6E9D; color: white; border: none;
+            border-radius: 7px; font-weight: 700; cursor: pointer; font-size: 13px;
+            transition: all 0.3s; height: 38px; white-space: nowrap;
+        }
+        .input-row button:hover {
+            background: #4a5d8a; transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(90, 110, 157, 0.3);
+        }
+        .input-row .checkbox-label {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; color: #2c3e50;
+            height: 38px; cursor: pointer;
+        }
+        .input-row .checkbox-label input[type="checkbox"] {
+            width: 18px; height: 18px; cursor: pointer; accent-color: #5A6E9D;
+        }
+        .download-all-options {
+            display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0;
+            padding: 12px; background: #f8f9fa; border-radius: 8px;
+            border: 2px solid #e8e8e8; align-items: center;
+        }
+        .download-all-options .label {
+            font-weight: 600; font-size: 13px; color: #2c3e50; margin-right: 6px;
+        }
+        .download-all-options button {
+            padding: 6px 14px; border: none; border-radius: 6px;
+            font-weight: 600; font-size: 12px; cursor: pointer;
+            transition: all 0.3s; color: white;
+        }
+        .download-all-options button:hover { transform: translateY(-2px); }
+        .btn-dl-html { background: #2ecc71; }
+        .btn-dl-html:hover { background: #27ae60; box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3); }
+        .btn-dl-png { background: #9b59b6; }
+        .btn-dl-png:hover { background: #8e44ad; box-shadow: 0 4px 12px rgba(155, 182, 0.3); }
+        .btn-dl-png-sf { background: #8e44ad; }
+        .btn-dl-png-sf:hover { background: #7d3c98; box-shadow: 0 4px 12px rgba(142, 68, 173, 0.3); }
+        .btn-dl-gif { background: #e67e22; }
+        .btn-dl-gif:hover { background: #d35400; box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3); }
+        .autocomplete-hint {
+            font-size: 10px; color: #666; margin-top: 4px;
+            display: flex; gap: 18px; flex-wrap: wrap; padding: 6px 0;
+            align-items: center; line-height: 1.4; min-height: 22px;
+        }
+        .autocomplete-hint .hint-item {
+            display: inline-flex; align-items: center; gap: 5px;
+            line-height: 1; white-space: nowrap; vertical-align: middle;
+        }
+        .autocomplete-hint .hint-item .key {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: #f0f0f0; padding: 0 8px; border-radius: 3px;
+            font-size: 9px; font-weight: bold; color: #333;
+            height: 16px; line-height: 1; box-sizing: border-box; vertical-align: middle;
+        }
+        #assinaturas { margin-top: 20px; }
+        .signature-box {
+            background: #ffffff; border: 2px solid #e8e8e8; border-radius: 12px;
+            padding: 20px; margin-top: 16px; transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .signature-box:hover {
+            border-color: #5A6E9D;
+            box-shadow: 0 6px 25px rgba(90, 110, 157, 0.1);
+        }
+        .signature-box .actions {
+            margin-top: 14px; padding-top: 14px; border-top: 2px solid #f0f0f0;
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .signature-box .actions button {
+            padding: 6px 14px; border: none; border-radius: 5px;
+            font-size: 11px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; color: white;
+        }
+        .btn-copy { background: #2ecc71; }
+        .btn-copy:hover { background: #27ae60; transform: translateY(-2px); }
+        .btn-png { background: #9b59b6; }
+        .btn-png:hover { background: #8e44ad; transform: translateY(-2px); }
+        .btn-gif-action { background: #e67e22; }
+        .btn-gif-action:hover { background: #d35400; transform: translateY(-2px); }
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); display: none;
+            align-items: center; justify-content: center;
+            z-index: 9999; backdrop-filter: blur(3px);
+        }
+        .loading-overlay.active { display: flex; }
+        .loading-content {
+            background: white; padding: 30px 40px; border-radius: 16px;
+            text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            min-width: 300px;
+        }
+        .loading-content .spinner {
+            width: 50px; height: 50px; border: 5px solid #f0f0f0;
+            border-top: 5px solid #5A6E9D; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-content p { color: #2c3e50; font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+        .loading-content .progress-bar {
+            width: 100%; height: 6px; background: #f0f0f0;
+            border-radius: 3px; margin-top: 12px; overflow: hidden;
+        }
+        .loading-content .progress-bar .progress-fill {
+            height: 100%; background: linear-gradient(90deg, #5A6E9D, #8e44ad);
+            width: 0%; border-radius: 3px; transition: width 0.3s;
+        }
+        .loading-content .status-detail { font-size: 12px; color: #666; margin-top: 8px; }
+        .control-group .control-actions {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;
+        }
+        .control-group .control-actions button {
+            padding: 8px; border: none; border-radius: 7px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; color: white;
+        }
+        @media (max-width: 768px) {
+            .editor-actions button { padding: 8px 14px; font-size: 12px; }
+            .signature-box .actions button { padding: 5px 12px; font-size: 10px; }
+            .control-group .control-actions button { padding: 6px 12px; font-size: 11px; }
+            .download-all-options { flex-direction: column; align-items: stretch; }
+            .download-all-options .label { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loadingText">Processando...</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="status-detail" id="statusDetail"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="editor-layout">
+            <div class="control-panel">
+                <h3>Controles do Editor</h3>
+                <div class="control-group">
+                    <div class="format-selector-group">
+                        <div class="format-selector-item" id="formatoLogo">
+                            <span class="item-label">Logo</span>
+                            <div class="format-buttons">
+                                <button class="format-btn-small active" data-format="png" onclick="selecionarFormatoImagem('logo', 'png')">PNG</button>
+                                <button class="format-btn-small gif-btn" data-format="gif" onclick="selecionarFormatoImagem('logo', 'gif')">GIF</button>
+                            </div>
+                        </div>
+                        <div class="format-selector-item" id="formatoAnuncio">
+                            <span class="item-label">Anúncio</span>
+                            <div class="format-buttons">
+                                <button class="format-btn-small active" data-format="png" onclick="selecionarFormatoImagem('anuncio', 'png')">PNG</button>
+                                <button class="format-btn-small gif-btn" data-format="gif" onclick="selecionarFormatoImagem('anuncio', 'gif')">GIF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Configurações do GIF (Download)</label>
+                    <div class="control-row">
+                        <label>Frames:</label>
+                        <input type="range" id="gifFrames" min="3" max="15" value="6" step="1">
+                        <span class="value-display" id="gifFramesVal">6</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Delay (ms):</label>
+                        <input type="range" id="gifDelay" min="100" max="500" value="300" step="10">
+                        <span class="value-display" id="gifDelayVal">300</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Movimento (px):</label>
+                        <input type="range" id="gifMovement" min="2" max="20" value="8" step="1">
+                        <span class="value-display" id="gifMovementVal">8</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Anúncio</label>
+                    <div class="toggle-container">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleAnuncio" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">
+                            Status: <span class="status" id="anuncioStatus">Ativo</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Dimensões (em pixels) - SEM LIMITES</label>
+                    <div class="control-row">
+                        <label>Largura:</label>
+                        <input type="range" id="sigWidth" min="50" max="2000" value="450" step="1">
+                        <input type="number" id="sigWidthNum" value="450" min="1" max="99999" step="1">
+                        <span class="value-display" id="sigWidthVal">450</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Altura:</label>
+                        <input type="range" id="sigHeight" min="30" max="800" value="121" step="1">
+                        <input type="number" id="sigHeightNum" value="121" min="1" max="99999" step="1">
+                        <span class="value-display" id="sigHeightVal">121</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Logo</label>
+                    <div class="control-row">
+                        <label>Largura:</label>
+                        <input type="range" id="logoWidth" min="10" max="600" value="100" step="1">
+                        <span class="value-display" id="logoWidthVal">100</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Altura:</label>
+                        <input type="range" id="logoHeight" min="10" max="600" value="95" step="1">
+                        <span class="value-display" id="logoHeightVal">95</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Tamanho do Anúncio</label>
+                    <div class="control-row">
+                        <label>Largura:</label>
+                        <input type="range" id="anuncioWidth" min="10" max="500" value="85" step="1">
+                        <span class="value-display" id="anuncioWidthVal">85</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Altura:</label>
+                        <input type="range" id="anuncioHeight" min="10" max="500" value="75" step="1">
+                        <span class="value-display" id="anuncioHeightVal">75</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Fontes (0 a 100)</label>
+                    <div class="control-row">
+                        <label>Nome:</label>
+                        <input type="range" id="fontNome" min="0" max="100" value="18" step="1">
+                        <span class="value-display" id="fontNomeVal">18</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Cargo:</label>
+                        <input type="range" id="fontCargo" min="0" max="100" value="11" step="1">
+                        <span class="value-display" id="fontCargoVal">11</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Contato:</label>
+                        <input type="range" id="fontContato" min="0" max="100" value="11" step="1">
+                        <span class="value-display" id="fontContatoVal">11</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Ícones (0 a 100)</label>
+                    <div class="control-row">
+                        <label>Tamanho:</label>
+                        <input type="range" id="iconSize" min="0" max="100" value="14" step="1">
+                        <span class="value-display" id="iconSizeVal">14</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Fonte:</label>
+                        <input type="range" id="iconFont" min="0" max="100" value="7" step="1">
+                        <span class="value-display" id="iconFontVal">7</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Espaçamentos</label>
+                    <div class="control-row">
+                        <label>Logo-Dados:</label>
+                        <input type="range" id="spacingLogo" min="-100" max="100" value="2" step="1">
+                        <span class="value-display" id="spacingLogoVal">2</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Dados-Anúncio:</label>
+                        <input type="range" id="spacingAnuncio" min="-100" max="100" value="2" step="1">
+                        <span class="value-display" id="spacingAnuncioVal">2</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Entre contatos:</label>
+                        <input type="range" id="spacingContato" min="-50" max="50" value="1" step="1">
+                        <span class="value-display" id="spacingContatoVal">1</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Ícone-texto:</label>
+                        <input type="range" id="spacingIcon" min="-50" max="50" value="4" step="1">
+                        <span class="value-display" id="spacingIconVal">4</span>
+                    </div>
+                    <div class="control-row">
+                        <label>Espaçamento letras:</label>
+                        <input type="range" id="letterSpacing" min="-10" max="15" value="0" step="0.5">
+                        <span class="value-display" id="letterSpacingVal">0</span>
+                    </div>
+                </div>
+                <div class="control-group" style="border-bottom:none;margin-bottom:0;padding-bottom:0;">
+                    <div class="control-actions">
+                        <button class="btn-primary" onclick="salvarModelo()">Salvar Modelo</button>
+                        <button class="btn-warning" onclick="resetarModelo()">Resetar</button>
+                    </div>
+                    <div class="control-hint" style="text-align:center;margin-top:8px;">
+                        <a href="https://github.com/Record-Guaiba/CONTROLE/tree/main" target="_blank" style="color:#5A6E9D;font-weight:600;text-decoration:none;font-size:11px;">
+                            Ver todas as imagens no GitHub
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-area">
+                <div class="signature-editor" id="signatureEditor">
+                    <div id="previewContainer">
+                        <div style="color:#999;text-align:center;padding:40px;">
+                            <i class="bi bi-plus-circle" style="font-size:32px;display:block;margin-bottom:12px;color:#ccc;"></i>
+                            <span style="font-size:14px;">Adicione um contato para visualizar</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="editor-actions">
+                    <button class="btn-success" onclick="gerarAssinaturas()">Gerar Assinaturas</button>
+                    <button class="btn-danger" onclick="limparTudo()">Limpar Tudo</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="contatos-section">
+            <div class="section-header">
+                <h3>Contatos</h3>
+                <span class="badge" id="contatosBadge">0 contatos</span>
+            </div>
+            <div class="input-row">
+                <input id="nome" placeholder="Nome completo" value="Amailson Gawlinski">
+                <input id="cargo" placeholder="Cargo" value="Assistente de Suporte">
+                <input id="email" placeholder="E-mail (ex: usuario)" value="agawlinski">
+                <input id="telefone" placeholder="Telefone (ex: 3161)" value="3161">
+                <input id="celular" placeholder="Celular (ex: 99999-9999)" value="">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="semTelefone">
+                    Sem Telefone
+                </label>
+                <button onclick="addContato()">➕ Adicionar</button>
+                <button onclick="importarCSV()" class="btn-purple" style="border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px;padding:8px 16px;height:38px;white-space:nowrap;">📂 Importar CSV</button>
+            </div>
+            <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none" onchange="processarCSV(event)">
+            <div class="download-all-options">
+                <span class="label">Baixar em:</span>
+                <button class="btn-dl-html" onclick="baixarTodasAssinaturas('html')">HTML</button>
+                <button class="btn-dl-png" onclick="baixarTodasAssinaturas('png')">PNG</button>
+                <button class="btn-dl-png-sf" onclick="baixarTodasAssinaturas('png_sem_fundo')">PNG sem fundo</button>
+                <button class="btn-dl-gif" onclick="baixarTodasAssinaturas('gif')">GIF</button>
+            </div>
+            <div class="autocomplete-hint">
+                <span class="hint-item"><span class="key">Tab</span> ou <span class="key">Enter</span> para autocompletar</span>
+                <span class="hint-item">E-mail: <span class="key">usuario</span> → <span class="key">usuario@recordguaiba.tv.br</span></span>
+                <span class="hint-item">Telefone: <span class="key">3161</span> → <span class="key">+55 51 3301-3161</span></span>
+                <span class="hint-item">Celular: <span class="key">999999999</span> → <span class="key">(51) 99999-9999</span></span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Cargo</th>
+                            <th>E-mail</th>
+                            <th>Telefone</th>
+                            <th>Celular</th>
+                            <th style="width:50px;text-align:center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista"></tbody>
+                </table>
+            </div>
+            <div id="assinaturas"></div>
+        </div>
+    </div>
+
+    <script>
+        let modelo = {
+            largura: 450, altura: 121,
+            logoLargura: 100, logoAltura: 95,
+            anuncioLargura: 85, anuncioAltura: 75,
+            mostrarAnuncio: true,
+            fonteNome: 18, fonteCargo: 11, fonteContato: 11,
+            iconTamanho: 14, iconFonte: 7,
+            espacamentoLogo: 2, espacamentoAnuncio: 2,
+            espacamentoContato: 1, espacamentoIcon: 4,
+            letterSpacing: 0,
+            formatoLogo: 'png', formatoAnuncio: 'png',
+            gifLogoSelecionado: '', gifAnuncioSelecionado: '',
+            gifFrames: 6, gifDelay: 300, gifMovement: 8
+        };
+
+        let contatos = [];
+        let posicoesElementos = {};
+        let gifLogoSelecionado = '';
+        let gifAnuncioSelecionado = '';
+        let loadingTimeout = null;
+
+        const LOGO_PNG = 'https://raw.githubusercontent.com/Record-Guaiba/CONTROLE/refs/heads/main/LOGO.png';
+        const LOGO_GIF = 'https://raw.githubusercontent.com/Record-Guaiba/CONTROLE/refs/heads/main/LOGO.gif';
+        const ANUNCIO_PNG = 'https://raw.githubusercontent.com/Record-Guaiba/CONTROLE/refs/heads/main/anuncio.png';
+        const ANUNCIO_GIF = 'https://raw.githubusercontent.com/Record-Guaiba/CONTROLE/refs/heads/main/anuncio.gif';
+        const DOMAIN = '@recordguaiba.tv.br';
+        const TELEFONE_PREFIXO = '+55 51 3301-';
+
+        function atualizarStatusAnuncio() {
+            const status = document.getElementById('anuncioStatus');
+            if (modelo.mostrarAnuncio !== false) {
+                status.textContent = 'Ativo ✅';
+                status.style.color = '#27ae60';
+            } else {
+                status.textContent = 'Inativo ❌';
+                status.style.color = '#e74c3c';
+            }
+        }
+
+        function atualizarPreview() {
+            const container = document.getElementById('previewContainer');
+            if (contatos.length === 0) {
+                container.innerHTML = `
+                            <div style="color:#999;text-align:center;padding:40px;">
+                                <i class="bi bi-plus-circle" style="font-size:32px;display:block;margin-bottom:12px;color:#ccc;"></i>
+                                <span style="font-size:14px;">Adicione um contato para visualizar</span>
+                            </div>
+                        `;
+                return;
+            }
+            const c = contatos[0];
+            container.innerHTML = gerarTemplate(c, false);
+            atualizarStatusAnuncio();
+            document.getElementById('contatosBadge').textContent = contatos.length + ' contatos';
+            setTimeout(configurarDragElements, 100);
+        }
+
+        function carregarListaGIFs() {
+            const selectLogo = document.getElementById('gifSelectorLogo');
+            const selectAnuncio = document.getElementById('gifSelectorAnuncio');
+            if (selectLogo) {
+                selectLogo.innerHTML = '<option value="">Nenhum (usar PNG)</option>';
+                [{ nome: 'logo', arquivo: 'LOGO.gif' }, { nome: 'anuncio', arquivo: 'anuncio.gif' }].forEach(gif => {
+                    const option = document.createElement('option');
+                    option.value = gif.arquivo;
+                    option.textContent = gif.nome + ' (' + gif.arquivo + ')';
+                    selectLogo.appendChild(option);
+                });
+                if (modelo.gifLogoSelecionado) selectLogo.value = modelo.gifLogoSelecionado;
+            }
+            if (selectAnuncio) {
+                selectAnuncio.innerHTML = '<option value="">Nenhum (usar PNG)</option>';
+                [{ nome: 'logo', arquivo: 'LOGO.gif' }, { nome: 'anuncio', arquivo: 'anuncio.gif' }].forEach(gif => {
+                    const option = document.createElement('option');
+                    option.value = gif.arquivo;
+                    option.textContent = gif.nome + ' (' + gif.arquivo + ')';
+                    selectAnuncio.appendChild(option);
+                });
+                if (modelo.gifAnuncioSelecionado) selectAnuncio.value = modelo.gifAnuncioSelecionado;
+            }
+        }
+
+        function selecionarFormatoImagem(target, formato) {
+            const containerId = target === 'logo' ? 'formatoLogo' : 'formatoAnuncio';
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.querySelectorAll('.format-btn-small').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.format === formato);
+            });
+            if (target === 'logo') modelo.formatoLogo = formato;
+            else if (target === 'anuncio') modelo.formatoAnuncio = formato;
+            atualizarPreview();
+        }
+
+        function autocompletarEmail(input) {
+            const valor = input.value.trim();
+            if (valor && !valor.includes('@') && !valor.includes(' ')) {
+                input.value = valor + DOMAIN;
+                input.classList.add('autocompletado');
+                return true;
+            }
+            return false;
+        }
+
+        function autocompletarTelefone(input) {
+            const valor = input.value.trim();
+            if (!valor) return false;
+            const numeros = valor.replace(/\D/g, '');
+            if (/^\(\d{2}\) \d{4,5}-\d{4}$/.test(valor)) return true;
+            if (valor.includes('+55 51 3301-')) {
+                const partes = valor.split('3301-');
+                if (partes.length === 2 && partes[1].length > 0 && /^\d{4}$/.test(partes[1])) {
+                    input.classList.add('autocompletado-telefone');
+                    return true;
+                }
+                return false;
+            }
+            if (/^\d{4,5}$/.test(numeros) && numeros.length >= 4) {
+                input.value = TELEFONE_PREFIXO + numeros;
+                input.classList.add('autocompletado-telefone');
+                return true;
+            }
+            if (/^\d{10,11}$/.test(numeros)) {
+                if (numeros.length === 11) {
+                    input.value = `(${numeros.substring(0,2)}) ${numeros.substring(2,7)}-${numeros.substring(7)}`;
+                } else {
+                    input.value = `(${numeros.substring(0,2)}) ${numeros.substring(2,6)}-${numeros.substring(6)}`;
+                }
+                input.classList.add('autocompletado-telefone');
+                return true;
+            }
+            return false;
+        }
+
+        function autocompletarCelular(input) {
+            const valor = input.value.trim();
+            if (!valor) return false;
+            const numeros = valor.replace(/\D/g, '');
+            if (/^\(\d{2}\) \d{5}-\d{4}$/.test(valor)) return true;
+            if (/^\d{10,11}$/.test(numeros)) {
+                if (numeros.length === 11) {
+                    input.value = `(${numeros.substring(0,2)}) ${numeros.substring(2,7)}-${numeros.substring(7)}`;
+                } else {
+                    input.value = `(${numeros.substring(0,2)}) ${numeros.substring(2,6)}-${numeros.substring(6)}`;
+                }
+                input.classList.add('autocompletado-telefone');
+                return true;
+            }
+            return false;
+        }
+
+        function capitalizarNome(nome) {
+            if (!nome) return '';
+            const conectores = ['da', 'de', 'do', 'das', 'dos', 'e'];
+            return nome.toLowerCase().split(' ').map((palavra, index) => {
+                if (index > 0 && conectores.includes(palavra)) return palavra;
+                return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+            }).join(' ');
+        }
+
+        function telefonePreenchido(telefone) {
+            if (!telefone) return false;
+            const limpo = telefone.replace(/\s/g, '').replace(/[()\-+]/g, '');
+            return limpo.length >= 4;
+        }
+
+        // ============================================================
+        // ✅ GERAR TEMPLATE — VERSÃO FINAL
+        // O <a> do e-mail e o <span class="texto"> do telefone/celular
+        // são inline-flex com align-items:baseline → alinham o bold e o
+        // regular pela MESMA linha-base, tanto no preview quanto no PNG.
+        // ============================================================
+        function gerarTemplate(c, removerIndicadores = false, posicoes = null) {
+            const mostrarAnuncio = modelo.mostrarAnuncio !== false;
+            const letterSpacing = modelo.letterSpacing || 0;
+            const temTelefone = telefonePreenchido(c.telefone) && !c.semTelefone;
+            const temCelular = telefonePreenchido(c.celular);
+
+            const m = modelo;
+            let logoSrc = LOGO_PNG;
+            let anuncioSrc = ANUNCIO_PNG;
+            if (modelo.formatoLogo === 'gif') logoSrc = LOGO_GIF;
+            if (mostrarAnuncio && modelo.formatoAnuncio === 'gif') anuncioSrc = ANUNCIO_GIF;
+
+            const dragExtras = removerIndicadores ? '' : 'position:relative;cursor:grab;';
+            const indicatorHtml = removerIndicadores ? '' : '<span class="drag-indicator">⇱</span>';
+
+            const getPosStyle = (elementId) => {
+                if (posicoes && posicoes[elementId]) {
+                    const p = posicoes[elementId];
+                    if ((p.x && p.x !== 0) || (p.y && p.y !== 0)) {
+                        return `transform:translate(${p.x}px, ${p.y}px);`;
+                    }
+                }
+                return '';
+            };
+
+            const anuncioHtml = mostrarAnuncio ? `
+                <div class="anuncio-wrapper${removerIndicadores ? '' : ' draggable-element'}" data-element="anuncio" style="${dragExtras}${getPosStyle('anuncio')}">
+                    <img src="${anuncioSrc}" alt="Anúncio" style="width:100%;height:auto;max-width:${m.anuncioLargura}px;display:block;object-fit:contain;border:0;pointer-events:none;">
+                    ${indicatorHtml}
+                </div>
+            ` : '';
+
+            const logoHtml = `
+                <div class="logo-wrapper${removerIndicadores ? '' : ' draggable-element'}" data-element="logo" style="${dragExtras}${getPosStyle('logo')}">
+                    <img src="${logoSrc}" alt="Logo" style="width:100%;height:auto;max-width:${m.logoLargura}px;display:block;object-fit:contain;pointer-events:none;">
+                    ${indicatorHtml}
+                </div>
+            `;
+
+            const iconeEmail = `<span class="icone-redondo" style="width:${m.iconTamanho}px;height:${m.iconTamanho}px;min-width:${m.iconTamanho}px;min-height:${m.iconTamanho}px;font-size:${m.iconFonte}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-send-fill" style="font-size:${m.iconFonte}px;color:#ffffff;display:flex;align-items:center;justify-content:center;line-height:1;"></i></span>`;
+            const iconeTelefone = `<span class="icone-redondo" style="width:${m.iconTamanho}px;height:${m.iconTamanho}px;min-width:${m.iconTamanho}px;min-height:${m.iconTamanho}px;font-size:${m.iconFonte}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-telephone-fill" style="font-size:${m.iconFonte}px;color:#ffffff;display:flex;align-items:center;justify-content:center;line-height:1;"></i></span>`;
+            const iconeCelular = `<span class="icone-redondo" style="width:${m.iconTamanho}px;height:${m.iconTamanho}px;min-width:${m.iconTamanho}px;min-height:${m.iconTamanho}px;font-size:${m.iconFonte}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-whatsapp" style="font-size:${m.iconFonte}px;color:#ffffff;display:flex;align-items:center;justify-content:center;line-height:1;"></i></span>`;
+
+            // ✅ EMAIL: apenas span bold + texto puro. O alinhamento vem do <a> inline-flex.
+            function formatarEmail(email) {
+                if (!email) return 'E-mail não informado';
+                const partes = email.split('@');
+                if (partes.length === 2) {
+                    const spanClass = removerIndicadores ? '' : ' draggable-element';
+                    const spanStyle = `${dragExtras}font-weight:700;${getPosStyle('email-text')}`;
+                    return `<span class="${spanClass}" data-element="email-text" style="${spanStyle}">${partes[0]}${indicatorHtml}</span>@${partes[1]}`;
+                }
+                return email;
+            }
+
+            function formatarTelefone(telefone) {
+                if (!telefone) return 'Telefone não informado';
+                const regex = /^(\+?\d{1,3}\s+\d{1,3}\s+)(\d{4}-\d{4})$/;
+                const match = telefone.match(regex);
+                const spanClass = removerIndicadores ? '' : ' draggable-element';
+                const spanStyle = `${dragExtras}font-weight:700;${getPosStyle('telefone-text')}`;
+                if (match) {
+                    return `${match[1]}<span class="${spanClass}" data-element="telefone-text" style="${spanStyle}">${match[2]}${indicatorHtml}</span>`;
+                }
+                return `<span class="${spanClass}" data-element="telefone-text" style="${spanStyle}">${telefone}${indicatorHtml}</span>`;
+            }
+
+            function formatarCelular(celular) {
+                if (!celular) return 'Celular não informado';
+                const spanClass = removerIndicadores ? '' : ' draggable-element';
+                const spanStyle = `${dragExtras}font-weight:700;${getPosStyle('celular-text')}`;
+                return `<span class="${spanClass}" data-element="celular-text" style="${spanStyle}">${celular}${indicatorHtml}</span>`;
+            }
+
+            const anuncioCellWidth = mostrarAnuncio ? (m.anuncioLargura + m.espacamentoAnuncio + 10) : 0;
+            const logoCellWidth = m.logoLargura + m.espacamentoLogo + 10;
+
+            const nomeSpanClass = removerIndicadores ? '' : ' draggable-element';
+            const nomeSpanStyle = `font-size:${m.fonteNome}px;${dragExtras}letter-spacing:${letterSpacing}px;display:inline-block;${getPosStyle('nome')}`;
+
+            const cargoSpanClass = removerIndicadores ? '' : ' draggable-element';
+            const cargoSpanStyle = `font-size:${m.fonteCargo}px;${dragExtras}letter-spacing:${letterSpacing}px;display:inline-block;${getPosStyle('cargo')}`;
+
+            const cargoParts = c.cargo ? c.cargo.split('/').map(p => p.trim()) : ['Cargo não informado'];
+            const cargoDisplay = cargoParts.join(' / ');
+
+            // ✅ O <a> é inline-flex: o span bold e o texto @domain ficam como flex items
+            // e são forçados a alinhar pela baseline. Isso funciona no preview e no PNG.
+            let contatosHtml = `
+                <div class="contato" style="font-size:${m.fonteContato}px;gap:${m.espacamentoIcon}px;margin-top:${m.espacamentoContato}px;">
+                    ${iconeEmail}
+                    <a href="mailto:${c.email}" style="font-size:${m.fonteContato}px;letter-spacing:${letterSpacing}px;display:inline-flex;align-items:baseline;line-height:1.3;">${formatarEmail(c.email)}</a>
+                </div>
+            `;
+
+            if (temTelefone) {
+                contatosHtml += `
+                    <div class="contato" style="font-size:${m.fonteContato}px;gap:${m.espacamentoIcon}px;margin-top:${m.espacamentoContato}px;">
+                        ${iconeTelefone}
+                        <span class="texto" style="font-size:${m.fonteContato}px;letter-spacing:${letterSpacing}px;display:inline-flex;align-items:baseline;line-height:1.3;">${formatarTelefone(c.telefone)}</span>
+                    </div>
+                `;
+            }
+
+            if (temCelular) {
+                contatosHtml += `
+                    <div class="contato" style="font-size:${m.fonteContato}px;gap:${m.espacamentoIcon}px;margin-top:${m.espacamentoContato}px;">
+                        ${iconeCelular}
+                        <span class="texto" style="font-size:${m.fonteContato}px;letter-spacing:${letterSpacing}px;display:inline-flex;align-items:baseline;line-height:1.3;">${formatarCelular(c.celular)}</span>
+                    </div>
+                `;
+            }
+
+            return `
+                <table class="signature-table" width="${m.largura}" height="${m.altura}" style="width:${m.largura}px;height:${m.altura}px;max-width:${m.largura}px;min-width:${m.largura}px;max-height:${m.altura}px;min-height:${m.altura}px;">
+                    <tr>
+                        <td class="logo-cell" style="width:${logoCellWidth}px;max-width:${logoCellWidth}px;min-width:${logoCellWidth}px;padding:0 ${m.espacamentoLogo}px 0 6px;text-align:center;">
+                            ${logoHtml}
+                        </td>
+                        <td class="info-cell" style="padding:0 6px;vertical-align:middle;width:auto;">
+                            <div class="nome${nomeSpanClass}" data-element="nome" style="${nomeSpanStyle}">
+                                ${c.nome || 'Nome não informado'}
+                                ${indicatorHtml}
+                            </div>
+                            <div class="cargo-area" style="margin-top:0;">
+                                <span class="cargo${cargoSpanClass}" data-element="cargo" style="${cargoSpanStyle}">
+                                    ${cargoDisplay}
+                                    ${indicatorHtml}
+                                </span>
+                            </div>
+                            ${contatosHtml}
+                        </td>
+                        ${mostrarAnuncio ? `
+                        <td class="anuncio-cell" style="width:${anuncioCellWidth}px;max-width:${anuncioCellWidth}px;min-width:${anuncioCellWidth}px;padding:0 6px 0 ${m.espacamentoAnuncio}px;text-align:center;">
+                            ${anuncioHtml}
+                        </td>
+                        ` : ''}
+                    </tr>
+                </table>
+            `;
+        }
+
+        function obterEscalaDoPreview() {
+            const previewTable = document.querySelector('#previewContainer .signature-table');
+            if (!previewTable) return 1;
+            const transform = window.getComputedStyle(previewTable).transform;
+            if (!transform || transform === 'none') return 1;
+            const match = transform.match(/matrix\(([^,]+)/);
+            if (match) {
+                const scale = parseFloat(match[1]);
+                if (!isNaN(scale) && scale > 0) return scale;
+            }
+            return 1;
+        }
+
+        function configurarDragElements() {
+            const container = document.getElementById('previewContainer');
+            if (!container) return;
+            if (container._interactInstances) {
+                container._interactInstances.forEach(instance => instance.unset());
+            }
+            container._interactInstances = [];
+            const draggables = container.querySelectorAll('.draggable-element');
+            draggables.forEach(el => {
+                const instance = interact(el).draggable({
+                    inertia: false,
+                    listeners: {
+                        start: function(event) {
+                            event.target.classList.add('dragging');
+                            event.target.style.zIndex = '999';
+                        },
+                        move: function(event) {
+                            const target = event.target;
+                            const escala = obterEscalaDoPreview();
+                            const dxReal = event.dx / escala;
+                            const dyReal = event.dy / escala;
+                            const x = (parseFloat(target.getAttribute('data-x')) || 0) + dxReal;
+                            const y = (parseFloat(target.getAttribute('data-y')) || 0) + dyReal;
+                            target.style.transform = `translate(${x}px, ${y}px)`;
+                            target.setAttribute('data-x', x);
+                            target.setAttribute('data-y', y);
+                            const elementId = target.getAttribute('data-element') || 'unknown';
+                            posicoesElementos[elementId] = { x, y };
+                        },
+                        end: function(event) {
+                            const target = event.target;
+                            target.classList.remove('dragging');
+                            target.style.zIndex = '5';
+                        }
+                    }
+                });
+                container._interactInstances.push(instance);
+                const elementId = el.getAttribute('data-element');
+                if (elementId && posicoesElementos[elementId]) {
+                    const pos = posicoesElementos[elementId];
+                    el.setAttribute('data-x', pos.x);
+                    el.setAttribute('data-y', pos.y);
+                    el.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+                    el.style.zIndex = '5';
+                }
+            });
+        }
+
+        function resetarPosicoes() {
+            posicoesElementos = {};
+            const container = document.getElementById('previewContainer');
+            if (!container) return;
+            const draggables = container.querySelectorAll('.draggable-element');
+            draggables.forEach(el => {
+                el.setAttribute('data-x', 0);
+                el.setAttribute('data-y', 0);
+                el.style.transform = 'translate(0px, 0px)';
+                el.style.zIndex = '';
+            });
+            showToast('🔄 Posições resetadas!', 'info');
+        }
+
+        function showToast(message, type = 'info') {
+            const cores = { info: '#3498db', success: '#27ae60', warning: '#f39c12', error: '#e74c3c' };
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                        position: fixed; bottom: 25px; right: 25px;
+                        background: ${cores[type] || '#333'}; color: white;
+                        padding: 12px 24px; border-radius: 8px; font-size: 14px;
+                        font-weight: 600; box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+                        z-index: 10000; transform: translateY(80px); opacity: 0;
+                        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        max-width: 380px; border: 1px solid rgba(255,255,255,0.1);
+                    `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.transform = 'translateY(0)'; toast.style.opacity = '1'; }, 100);
+            setTimeout(() => {
+                toast.style.transform = 'translateY(80px)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+
+        function gerarAssinaturas() {
+            if (contatos.length === 0) {
+                showToast('⚠️ Nenhum contato para gerar assinaturas!', 'warning');
+                return;
+            }
+            const area = document.getElementById('assinaturas');
+            area.innerHTML = '';
+            contatos.forEach((c, index) => {
+                const posicoesAtuais = { ...posicoesElementos };
+                const html = gerarTemplate(c, false, posicoesAtuais);
+                area.innerHTML += `
+                            <div class="signature-box" id="assinatura-${index}">
+                                ${html}
+                                <div class="actions">
+                                    <button class="btn-copy" onclick="copiarHTML(${index})">📋 Copiar HTML</button>
+                                    <button class="btn-png" onclick="downloadPNG(${index})">🖼️ Baixar PNG</button>
+                                    <button class="btn-png" onclick="downloadPNGSemFundo(${index})" style="background:#8e44ad;">✨ PNG sem fundo</button>
+                                    <button class="btn-gif-action" onclick="downloadGIF(${index})">🎬 Baixar GIF</button>
+                                </div>
+                            </div>
+                        `;
+            });
+            document.getElementById('contatosBadge').textContent = contatos.length + ' contatos';
+            showToast('✅ Assinaturas geradas com sucesso!', 'success');
+        }
+
+        function redimensionarComAltaQualidade(canvas, escala) {
+            if (escala <= 1) return canvas;
+            const novaLargura = Math.round(canvas.width * escala);
+            const novaAltura = Math.round(canvas.height * escala);
+            const novoCanvas = document.createElement('canvas');
+            novoCanvas.width = novaLargura;
+            novoCanvas.height = novaAltura;
+            const ctx = novoCanvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(canvas, 0, 0, novaLargura, novaAltura);
+            return novoCanvas;
+        }
+
+        function sincronizarModeloComSliders() {
+            const mapeamento = {
+                sigWidth: 'largura', sigHeight: 'altura',
+                logoWidth: 'logoLargura', logoHeight: 'logoAltura',
+                anuncioWidth: 'anuncioLargura', anuncioHeight: 'anuncioAltura',
+                fontNome: 'fonteNome', fontCargo: 'fonteCargo', fontContato: 'fonteContato',
+                iconSize: 'iconTamanho', iconFont: 'iconFonte',
+                spacingLogo: 'espacamentoLogo', spacingAnuncio: 'espacamentoAnuncio',
+                spacingContato: 'espacamentoContato', spacingIcon: 'espacamentoIcon',
+                letterSpacing: 'letterSpacing'
+            };
+            Object.keys(mapeamento).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const v = parseFloat(el.value);
+                    if (!isNaN(v)) modelo[mapeamento[id]] = v;
+                }
+            });
+            const toggle = document.getElementById('toggleAnuncio');
+            if (toggle) modelo.mostrarAnuncio = toggle.checked;
+        }
+
+        async function criarPalcoDeCaptura(contato, posicoes) {
+            sincronizarModeloComSliders();
+            const palco = document.createElement('div');
+            palco.setAttribute('data-capture-stage', 'true');
+            palco.style.cssText = `
+                position: fixed; left: 0; top: 0;
+                width: ${modelo.largura}px; height: ${modelo.altura}px;
+                background: transparent; padding: 0; margin: 0;
+                opacity: 0.01; pointer-events: none;
+                z-index: 2147483647; overflow: hidden;
+                transform: none !important;
+                font-family: 'Segoe UI', Arial, sans-serif;
+            `;
+            // Reset mínimo — apenas o essencial. NÃO altera display/vertical-align.
+            palco.innerHTML = `
+                <style>
+                    [data-capture-stage] * {
+                        margin: 0; padding: 0; box-sizing: border-box;
+                        font-family: 'Segoe UI', Arial, sans-serif;
+                    }
+                    [data-capture-stage] .signature-table { overflow: visible; }
+                    [data-capture-stage] .cargo-area { overflow: visible; }
+                    /* ✅ Reforça inline-flex para o <a> e o <span.texto> dentro do palco */
+                    [data-capture-stage] .contato a,
+                    [data-capture-stage] .contato .texto {
+                        display: inline-flex;
+                        align-items: baseline;
+                    }
+                </style>
+                ${gerarTemplate(contato, true, posicoes)}
+            `;
+            document.body.appendChild(palco);
+
+            if (document.fonts && document.fonts.ready) {
+                try { await document.fonts.ready; } catch (e) {}
+            }
+            const imgs = Array.from(palco.querySelectorAll('img'));
+            await Promise.all(imgs.map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(res => {
+                    img.onload = res;
+                    img.onerror = res;
+                    setTimeout(res, 5000);
+                });
+            }));
+            await new Promise(r => setTimeout(r, 200));
+            return palco;
+        }
+
+        async function capturarPalco(palco, comFundo) {
+            const canvas = await html2canvas(palco, {
+                scale: 4, useCORS: true, allowTaint: true, logging: false,
+                backgroundColor: comFundo ? '#ffffff' : null,
+                width: modelo.largura, height: modelo.altura,
+                windowWidth: modelo.largura, windowHeight: modelo.altura,
+                onclone: (doc) => {
+                    const stage = doc.querySelector('[data-capture-stage="true"]');
+                    if (!stage) return;
+                    stage.style.opacity = '1';
+                    stage.style.transform = 'none';
+                    if (!comFundo) {
+                        stage.style.background = 'transparent';
+                        stage.querySelectorAll('*').forEach(el => {
+                            if (el.classList.contains('icone-redondo')) {
+                                el.style.background = '#5A6E9D';
+                                el.style.backgroundColor = '#5A6E9D';
+                                return;
+                            }
+                            if (el.tagName === 'IMG') return;
+                            if (el.tagName === 'STYLE') return;
+                            el.style.background = 'transparent';
+                            el.style.backgroundColor = 'transparent';
+                            el.style.boxShadow = 'none';
+                        });
+                    }
+                }
+            });
+            const canvasFinal = document.createElement('canvas');
+            canvasFinal.width = modelo.largura;
+            canvasFinal.height = modelo.altura;
+            const ctx = canvasFinal.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            if (comFundo) {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvasFinal.width, canvasFinal.height);
+            } else {
+                ctx.clearRect(0, 0, canvasFinal.width, canvasFinal.height);
+            }
+            ctx.drawImage(canvas, 0, 0, modelo.largura, modelo.altura);
+            return canvasFinal;
+        }
+
+        async function capturarAssinaturaPNG(contato, comFundo = true) {
+            const posicoes = { ...posicoesElementos };
+            const palco = await criarPalcoDeCaptura(contato, posicoes);
+            try {
+                return await capturarPalco(palco, comFundo);
+            } finally {
+                if (palco.parentNode) palco.parentNode.removeChild(palco);
+            }
+        }
+
+        async function downloadPNG(index) {
+            const contato = contatos[index];
+            if (!contato) { showToast('⚠️ Contato não encontrado!', 'error'); return; }
+            showLoading('Gerando PNG...');
+            try {
+                const canvas = await capturarAssinaturaPNG(contato, true);
+                canvas.toBlob((blob) => {
+                    if (!blob) { hideLoading(); showToast('❌ Erro ao gerar PNG.', 'error'); return; }
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = contato.nome.replace(/\s+/g, '_') + '_assinatura.png';
+                    link.href = url;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => URL.revokeObjectURL(url), 2000);
+                    hideLoading();
+                    showToast('✅ PNG baixado com sucesso!', 'success');
+                }, 'image/png', 1.0);
+            } catch (err) {
+                console.error('Erro ao gerar PNG:', err);
+                hideLoading();
+                showToast('❌ Erro: ' + err.message, 'error');
+            }
+        }
+
+        async function downloadPNGSemFundo(index) {
+            const contato = contatos[index];
+            if (!contato) { showToast('⚠️ Contato não encontrado!', 'error'); return; }
+            showLoading('Gerando PNG sem fundo...');
+            try {
+                const canvas = await capturarAssinaturaPNG(contato, false);
+                canvas.toBlob((blob) => {
+                    if (!blob) { hideLoading(); showToast('❌ Erro ao gerar PNG.', 'error'); return; }
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = contato.nome.replace(/\s+/g, '_') + '_sem_fundo.png';
+                    link.href = url;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => URL.revokeObjectURL(url), 2000);
+                    hideLoading();
+                    showToast('✅ PNG sem fundo baixado com sucesso!', 'success');
+                }, 'image/png', 1.0);
+            } catch (err) {
+                console.error('Erro ao gerar PNG sem fundo:', err);
+                hideLoading();
+                showToast('❌ Erro: ' + err.message, 'error');
+            }
+        }
+
+        async function baixarTodasAssinaturas(tipo) {
+            if (contatos.length === 0) { showToast('⚠️ Nenhum contato para baixar!', 'warning'); return; }
+            if (tipo !== 'html' && typeof JSZip === 'undefined') {
+                showToast('⚠️ Carregando biblioteca ZIP... Aguarde.', 'warning');
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                script.onload = function() { showToast('✅ Biblioteca ZIP carregada! Tente novamente.', 'success'); };
+                document.head.appendChild(script);
+                return;
+            }
+            if (tipo === 'gif' && typeof GIF === 'undefined') {
+                showToast('⚠️ Carregando biblioteca GIF... Aguarde.', 'warning');
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js';
+                script.onload = function() { showToast('✅ Biblioteca GIF carregada! Tente novamente.', 'success'); };
+                document.head.appendChild(script);
+                return;
+            }
+            const tiposNomes = { 'html': 'HTML', 'png': 'PNG', 'png_sem_fundo': 'PNG sem fundo', 'gif': 'GIF' };
+            showLoading(`Baixando todas as assinaturas (${tiposNomes[tipo] || tipo})...`);
+            document.getElementById('statusDetail').textContent = 'Preparando arquivos...';
+            try {
+                if (tipo === 'html') {
+                    const zip = new JSZip();
+                    const total = contatos.length;
+                    for (let i = 0; i < total; i++) {
+                        const c = contatos[i];
+                        const nomeArquivo = c.nome.replace(/\s+/g, '_') + '_assinatura.html';
+                        document.getElementById('statusDetail').textContent = `Processando ${i+1} de ${total}: ${c.nome}`;
+                        document.getElementById('progressFill').style.width = ((i / total) * 100) + '%';
+                        const posicoesAtuais = { ...posicoesElementos };
+                        const html = gerarHTMLCompleto(c, posicoesAtuais);
+                        zip.file(nomeArquivo, html);
+                    }
+                    document.getElementById('statusDetail').textContent = 'Criando arquivo ZIP...';
+                    document.getElementById('loadingText').textContent = 'Compactando arquivos...';
+                    const zipBlob = await zip.generateAsync({ type: 'blob' });
+                    saveAs(zipBlob, 'assinaturas_record_guaiba_html.zip');
+                    hideLoading();
+                    showToast('✅ Todas as assinaturas HTML baixadas com sucesso!', 'success');
+                    return;
+                }
+                const zip = new JSZip();
+                const total = contatos.length;
+                const extensao = tipo === 'gif' ? 'gif' : 'png';
+                const nomeBase = tipo === 'png_sem_fundo' ? 'sem_fundo' : '';
+                const frames = parseInt(document.getElementById('gifFrames').value) || 6;
+                const delay = parseInt(document.getElementById('gifDelay').value) || 300;
+                const movement = parseInt(document.getElementById('gifMovement').value) || 8;
+                for (let i = 0; i < total; i++) {
+                    const c = contatos[i];
+                    const nomeArquivo = c.nome.replace(/\s+/g, '_') +
+                        (nomeBase ? '_' + nomeBase : '') +
+                        '_assinatura.' + extensao;
+                    document.getElementById('statusDetail').textContent = `Processando ${i+1} de ${total}: ${c.nome}`;
+                    document.getElementById('progressFill').style.width = ((i / total) * 100) + '%';
+                    let blob;
+                    if (tipo === 'gif') {
+                        blob = await gerarGIFBlobCompleto(c, frames, delay, movement);
+                    } else if (tipo === 'png_sem_fundo') {
+                        const canvas = await capturarAssinaturaPNG(c, false);
+                        blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+                    } else {
+                        const canvas = await capturarAssinaturaPNG(c, true);
+                        blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+                    }
+                    if (blob) zip.file(nomeArquivo, blob);
+                }
+                document.getElementById('statusDetail').textContent = 'Criando arquivo ZIP...';
+                document.getElementById('loadingText').textContent = 'Compactando arquivos...';
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const nomeZip = `assinaturas_record_guaiba${nomeBase ? '_' + nomeBase : ''}.zip`;
+                saveAs(zipBlob, nomeZip);
+                hideLoading();
+                showToast(`✅ Todas as assinaturas (${tiposNomes[tipo]}) baixadas com sucesso!`, 'success');
+            } catch (err) {
+                console.error('Erro ao baixar assinaturas:', err);
+                hideLoading();
+                showToast('❌ Erro ao baixar assinaturas: ' + err.message, 'error');
+            }
+        }
+
+        function gerarGIFBlobCompleto(contato, frames, delay, movement) {
+            return new Promise((resolve, reject) => {
+                const width = modelo.largura;
+                const height = modelo.altura;
+                const widthAumentada = Math.round(width * 2);
+                const heightAumentada = Math.round(height * 2);
+                const container = document.createElement('div');
+                container.setAttribute('data-capture-stage', 'true');
+                container.style.cssText = `
+                    position: fixed; left: 0; top: 0;
+                    width: ${width}px; height: ${height}px;
+                    background: white; padding: 0;
+                    opacity: 0.01; pointer-events: none;
+                    z-index: 2147483647; overflow: hidden;
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                `;
+                document.body.appendChild(container);
+                const elementos = ['logo', 'anuncio', 'nome', 'cargo', 'email-text', 'telefone-text', 'celular-text'];
+                const posicoesBase = {};
+                elementos.forEach(elId => {
+                    posicoesBase[elId] = posicoesElementos[elId] ? { ...posicoesElementos[elId] } : { x: 0, y: 0 };
+                });
+                let framesCapturados = [];
+                let frameAtual = 0;
+                function processarFrame() {
+                    if (frameAtual >= frames) {
+                        if (framesCapturados.length > 0) criarGIFCompleto();
+                        else { reject(new Error('Nenhum frame capturado')); document.body.removeChild(container); }
+                        return;
+                    }
+                    document.getElementById('statusDetail').textContent = `Capturando frame ${frameAtual+1} de ${frames}`;
+                    document.getElementById('progressFill').style.width = ((frameAtual) / frames * 100) + '%';
+                    const progress = frameAtual / (frames - 1);
+                    const angle = progress * 2 * Math.PI;
+                    const posicoesFrame = {};
+                    Object.keys(posicoesBase).forEach(key => {
+                        const base = posicoesBase[key];
+                        const offsetX = Math.sin(angle + (key.charCodeAt(0) || 0) * 0.5) * movement;
+                        const offsetY = Math.cos(angle + (key.charCodeAt(0) || 0) * 0.7) * movement;
+                        posicoesFrame[key] = { x: base.x + offsetX, y: base.y + offsetY };
+                    });
+                    const html = gerarTemplate(contato, true, posicoesFrame);
+                    container.innerHTML = `
+                        <style>
+                            [data-capture-stage] * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Arial,sans-serif; }
+                            [data-capture-stage] .signature-table { overflow: visible; }
+                            [data-capture-stage] .cargo-area { overflow: visible; }
+                            [data-capture-stage] .contato a,
+                            [data-capture-stage] .contato .texto { display: inline-flex; align-items: baseline; }
+                        </style>
+                        ${html}
+                    `;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, width, height);
+                    let frameCapturado = false;
+                    function capturarFrame() {
+                        if (frameCapturado) return;
+                        frameCapturado = true;
+                        html2canvas(container, {
+                            scale: 2, useCORS: true, allowTaint: true, logging: false,
+                            width: width, height: height, backgroundColor: '#ffffff',
+                            onclone: (doc) => {
+                                const stage = doc.querySelector('[data-capture-stage="true"]');
+                                if (stage) { stage.style.opacity = '1'; stage.style.background = '#ffffff'; }
+                            }
+                        }).then(frameCanvas => {
+                            ctx.drawImage(frameCanvas, 0, 0, width, height);
+                            framesCapturados.push(redimensionarComAltaQualidade(canvas, 2));
+                            frameAtual++;
+                            document.getElementById('progressFill').style.width = (frameAtual / frames * 100) + '%';
+                            document.getElementById('loadingText').textContent = `Capturando frames... ${Math.round(frameAtual / frames * 100)}%`;
+                            setTimeout(processarFrame, 150);
+                        }).catch(err => {
+                            console.error('Erro ao capturar frame:', err);
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, width, height);
+                            framesCapturados.push(redimensionarComAltaQualidade(canvas, 2));
+                            frameAtual++;
+                            setTimeout(processarFrame, 150);
+                        });
+                    }
+                    const images = container.querySelectorAll('img');
+                    let imagensCarregadas = 0;
+                    const totalImagens = images.length;
+                    if (totalImagens === 0) {
+                        capturarFrame();
+                    } else {
+                        images.forEach(img => {
+                            if (img.complete && img.naturalWidth > 0) {
+                                imagensCarregadas++;
+                                if (imagensCarregadas === totalImagens && !frameCapturado) capturarFrame();
+                            } else {
+                                img.onload = function() {
+                                    imagensCarregadas++;
+                                    if (imagensCarregadas === totalImagens && !frameCapturado) capturarFrame();
+                                };
+                                img.onerror = function() {
+                                    imagensCarregadas++;
+                                    if (imagensCarregadas === totalImagens && !frameCapturado) capturarFrame();
+                                };
+                                if (img.src) img.src = img.src + '?t=' + Date.now() + frameAtual;
+                            }
+                        });
+                    }
+                    setTimeout(() => { if (!frameCapturado) capturarFrame(); }, 10000);
+                }
+                function criarGIFCompleto() {
+                    document.getElementById('statusDetail').textContent = 'Renderizando GIF...';
+                    document.getElementById('loadingText').textContent = 'Renderizando GIF animado...';
+                    try {
+                        const gif = new GIF({
+                            workers: 2, quality: 10,
+                            width: widthAumentada, height: heightAumentada,
+                            workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
+                        });
+                        framesCapturados.forEach((canvas) => {
+                            gif.addFrame(canvas, { delay: delay, copy: true });
+                        });
+                        gif.on('progress', function(p) {
+                            const percent = Math.round(p * 100);
+                            document.getElementById('progressFill').style.width = percent + '%';
+                            document.getElementById('statusDetail').textContent = `Renderizando GIF... ${percent}%`;
+                        });
+                        gif.on('finished', function(blobGif) {
+                            document.body.removeChild(container);
+                            resolve(blobGif);
+                        });
+                        gif.on('error', function(err) {
+                            console.error('Erro no GIF:', err);
+                            document.body.removeChild(container);
+                            criarGIFAlternativoCompleto();
+                        });
+                        gif.render();
+                    } catch (err) {
+                        console.error('Erro ao criar GIF:', err);
+                        document.body.removeChild(container);
+                        criarGIFAlternativoCompleto();
+                    }
+                }
+                function criarGIFAlternativoCompleto() {
+                    try {
+                        const gifAlt = new GIF({
+                            workers: 0, quality: 10,
+                            width: widthAumentada, height: heightAumentada
+                        });
+                        framesCapturados.forEach((canvas) => {
+                            gifAlt.addFrame(canvas, { delay: delay, copy: true });
+                        });
+                        gifAlt.on('finished', function(blobGif) {
+                            document.body.removeChild(container);
+                            resolve(blobGif);
+                        });
+                        gifAlt.on('error', function(err) {
+                            console.error('Erro no GIF alternativo:', err);
+                            document.body.removeChild(container);
+                            const canvas = framesCapturados[0];
+                            canvas.toBlob(function(blob) { resolve(blob); }, 'image/png');
+                        });
+                        gifAlt.render();
+                    } catch (err) {
+                        console.error('Erro no método alternativo:', err);
+                        document.body.removeChild(container);
+                        const canvas = framesCapturados[0];
+                        canvas.toBlob(function(blob) { resolve(blob); }, 'image/png');
+                    }
+                }
+                processarFrame();
+            });
+        }
+
+        function downloadGIF(index) {
+            const contato = contatos[index];
+            if (!contato) { showToast('⚠️ Contato não encontrado!', 'error'); return; }
+            if (typeof GIF === 'undefined') {
+                showToast('⚠️ Carregando biblioteca GIF... Aguarde.', 'warning');
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js';
+                script.onload = function() { showToast('✅ Biblioteca GIF carregada! Tente novamente.', 'success'); };
+                document.head.appendChild(script);
+                return;
+            }
+            showLoading('Gerando GIF animado completo...');
+            const frames = parseInt(document.getElementById('gifFrames').value) || 6;
+            const delay = parseInt(document.getElementById('gifDelay').value) || 300;
+            const movement = parseInt(document.getElementById('gifMovement').value) || 8;
+            gerarGIFBlobCompleto(contato, frames, delay, movement)
+                .then(blobGif => {
+                    const link = document.createElement('a');
+                    link.download = contato.nome.replace(/\s+/g, '_') + '_assinatura.gif';
+                    link.href = URL.createObjectURL(blobGif);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                    hideLoading();
+                    showToast('✅ GIF animado completo gerado com sucesso!', 'success');
+                })
+                .catch(err => {
+                    console.error('Erro ao gerar GIF:', err);
+                    hideLoading();
+                    showToast('❌ Erro ao gerar GIF: ' + err.message, 'error');
+                });
+        }
+
+        function copiarHTML(index) {
+            const contato = contatos[index];
+            if (!contato) { showToast('⚠️ Contato não encontrado!', 'error'); return; }
+            const posicoesAtuais = { ...posicoesElementos };
+            const html = gerarHTMLCompleto(contato, posicoesAtuais);
+            navigator.clipboard.writeText(html).then(() => {
+                showToast('✅ HTML da assinatura copiado!', 'success');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = html;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('✅ HTML da assinatura copiado!', 'success');
+            });
+        }
+
+        function gerarHTMLCompleto(contato, posicoes = null) {
+            sincronizarModeloComSliders();
+            const posicoesAtuais = posicoes || { ...posicoesElementos };
+            const tabelaHtml = gerarTemplate(contato, true, posicoesAtuais);
+            return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assinatura - ${contato.nome}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        padding: 20px; background: #ffffff;
+        display: flex; justify-content: center; align-items: center;
+        min-height: 100vh; font-size: 14px; line-height: 1.5;
+    }
+    .signature-table {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        border-collapse: collapse; background: #ffffff;
+        table-layout: fixed; overflow: visible; border-radius: 4px;
+    }
+    .signature-table td { border: none; padding: 0; vertical-align: middle; }
+    .signature-table .logo-cell { vertical-align: middle; text-align: center; }
+    .signature-table .logo-cell .logo-wrapper {
+        width: 100%; display: flex; align-items: center; justify-content: center;
+    }
+    .signature-table .logo-cell img {
+        width: 100%; height: auto; display: block; object-fit: contain;
+    }
+    .signature-table .anuncio-cell { vertical-align: middle; text-align: center; }
+    .signature-table .anuncio-cell .anuncio-wrapper {
+        width: 100%; display: flex; align-items: center; justify-content: center;
+    }
+    .signature-table .anuncio-cell img {
+        width: 100%; height: auto; display: block; object-fit: contain;
+    }
+    .signature-table .info-cell {
+        vertical-align: middle; width: auto; padding: 0 6px; position: relative;
+    }
+    .signature-table .nome {
+        font-weight: 700; color: #5A6E9D; white-space: nowrap; display: inline-block;
+    }
+    .signature-table .cargo {
+        font-weight: 600; color: #5A6E9D; text-transform: uppercase !important;
+        white-space: nowrap; display: inline-block;
+    }
+    .signature-table .cargo-area { display: block; max-width: 100%; }
+    .signature-table .contato {
+        color: #5A6E9D; display: flex; align-items: center;
+        line-height: 1.3; white-space: nowrap;
+    }
+    .signature-table .contato a {
+        color: #5A6E9D; text-decoration: none; font-weight: 500; line-height: 1.3;
+        white-space: nowrap; text-transform: lowercase !important;
+        display: inline-flex; align-items: baseline;
+    }
+    .signature-table .contato .texto {
+        color: #5A6E9D; font-weight: 500; line-height: 1.3;
+        white-space: nowrap; text-transform: lowercase !important;
+        display: inline-flex; align-items: baseline;
+    }
+    .signature-table .contato a:hover { text-decoration: underline; }
+    .signature-table .destaque-negrito {
+        font-weight: 700; line-height: inherit;
+        text-transform: lowercase !important;
+    }
+    .signature-table .icone-redondo {
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 50%; background-color: #5A6E9D; color: #ffffff;
+        flex-shrink: 0;
+    }
+    .signature-table .icone-redondo i {
+        line-height: 1; color: #ffffff;
+        display: flex; align-items: center; justify-content: center;
+    }
+    @media print { body { padding: 0; } }
+</style>
+</head>
+<body>
+    ${tabelaHtml}
+</body>
+</html>`;
+        }
+
+        function showLoading(text) {
+            if (loadingTimeout) { clearTimeout(loadingTimeout); loadingTimeout = null; }
+            const overlay = document.getElementById('loadingOverlay');
+            document.getElementById('loadingText').textContent = text || 'Processando...';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('statusDetail').textContent = '';
+            overlay.classList.add('active');
+            loadingTimeout = setTimeout(() => {
+                if (document.getElementById('loadingOverlay').classList.contains('active')) {
+                    hideLoading();
+                    showToast('⚠️ O processo demorou muito. Tente novamente.', 'warning');
+                }
+            }, 120000);
+        }
+
+        function hideLoading() {
+            if (loadingTimeout) { clearTimeout(loadingTimeout); loadingTimeout = null; }
+            document.getElementById('loadingOverlay').classList.remove('active');
+            document.getElementById('statusDetail').textContent = '';
+        }
+
+        function configurarControles() {
+            const controles = [
+                { id: 'sigWidth', prop: 'largura', num: 'sigWidthNum', val: 'sigWidthVal' },
+                { id: 'sigHeight', prop: 'altura', num: 'sigHeightNum', val: 'sigHeightVal' },
+                { id: 'logoWidth', prop: 'logoLargura', val: 'logoWidthVal' },
+                { id: 'logoHeight', prop: 'logoAltura', val: 'logoHeightVal' },
+                { id: 'anuncioWidth', prop: 'anuncioLargura', val: 'anuncioWidthVal' },
+                { id: 'anuncioHeight', prop: 'anuncioAltura', val: 'anuncioHeightVal' },
+                { id: 'fontNome', prop: 'fonteNome', val: 'fontNomeVal' },
+                { id: 'fontCargo', prop: 'fonteCargo', val: 'fontCargoVal' },
+                { id: 'fontContato', prop: 'fonteContato', val: 'fontContatoVal' },
+                { id: 'iconSize', prop: 'iconTamanho', val: 'iconSizeVal' },
+                { id: 'iconFont', prop: 'iconFonte', val: 'iconFontVal' },
+                { id: 'spacingLogo', prop: 'espacamentoLogo', val: 'spacingLogoVal' },
+                { id: 'spacingAnuncio', prop: 'espacamentoAnuncio', val: 'spacingAnuncioVal' },
+                { id: 'spacingContato', prop: 'espacamentoContato', val: 'spacingContatoVal' },
+                { id: 'spacingIcon', prop: 'espacamentoIcon', val: 'spacingIconVal' },
+                { id: 'letterSpacing', prop: 'letterSpacing', val: 'letterSpacingVal' },
+                { id: 'gifFrames', prop: 'gifFrames', val: 'gifFramesVal' },
+                { id: 'gifDelay', prop: 'gifDelay', val: 'gifDelayVal' },
+                { id: 'gifMovement', prop: 'gifMovement', val: 'gifMovementVal' }
+            ];
+            controles.forEach(({ id, prop, num, val }) => {
+                const range = document.getElementById(id);
+                const display = document.getElementById(val);
+                const number = num ? document.getElementById(num) : null;
+                if (!range) return;
+                range.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    modelo[prop] = value;
+                    if (display) display.textContent = value;
+                    if (number) number.value = value;
+                    if (prop !== 'gifFrames' && prop !== 'gifDelay' && prop !== 'gifMovement') {
+                        atualizarPreview();
+                    }
+                });
+                if (number) {
+                    number.addEventListener('change', function() {
+                        let value = parseFloat(this.value) || 0;
+                        if (isNaN(value) || value < 0) value = 0;
+                        this.value = value;
+                        const rangeMin = parseFloat(range.min) || 0;
+                        const rangeMax = parseFloat(range.max) || 1000;
+                        if (value >= rangeMin && value <= rangeMax) range.value = value;
+                        modelo[prop] = value;
+                        if (display) display.textContent = value;
+                        if (prop !== 'gifFrames' && prop !== 'gifDelay' && prop !== 'gifMovement') {
+                            atualizarPreview();
+                        }
+                    });
+                }
+            });
+            const toggleAnuncio = document.getElementById('toggleAnuncio');
+            if (toggleAnuncio) {
+                toggleAnuncio.addEventListener('change', function() {
+                    modelo.mostrarAnuncio = this.checked;
+                    atualizarPreview();
+                    atualizarStatusAnuncio();
+                });
+                toggleAnuncio.checked = modelo.mostrarAnuncio !== false;
+            }
+        }
+
+        function salvarModelo() {
+            try {
+                sincronizarModeloComSliders();
+                const dados = { modelo: modelo, posicoes: posicoesElementos };
+                localStorage.setItem('modeloAssinatura', JSON.stringify(dados));
+                showToast('✅ Modelo e posições salvos com sucesso!', 'success');
+            } catch (e) {
+                showToast('❌ Erro ao salvar modelo: ' + e.message, 'error');
+            }
+        }
+
+        function resetarModelo() {
+            modelo = {
+                largura: 450, altura: 121,
+                logoLargura: 100, logoAltura: 95,
+                anuncioLargura: 85, anuncioAltura: 75,
+                mostrarAnuncio: true,
+                fonteNome: 18, fonteCargo: 11, fonteContato: 11,
+                iconTamanho: 14, iconFonte: 7,
+                espacamentoLogo: 2, espacamentoAnuncio: 2,
+                espacamentoContato: 1, espacamentoIcon: 4,
+                letterSpacing: 0,
+                formatoLogo: 'png', formatoAnuncio: 'png',
+                gifLogoSelecionado: '', gifAnuncioSelecionado: '',
+                gifFrames: 6, gifDelay: 300, gifMovement: 8
+            };
+            gifLogoSelecionado = '';
+            gifAnuncioSelecionado = '';
+            const mapeamento = {
+                sigWidth: 'largura', sigHeight: 'altura',
+                logoWidth: 'logoLargura', logoHeight: 'logoAltura',
+                anuncioWidth: 'anuncioLargura', anuncioHeight: 'anuncioAltura',
+                fontNome: 'fonteNome', fontCargo: 'fonteCargo', fontContato: 'fonteContato',
+                iconSize: 'iconTamanho', iconFont: 'iconFonte',
+                spacingLogo: 'espacamentoLogo', spacingAnuncio: 'espacamentoAnuncio',
+                spacingContato: 'espacamentoContato', spacingIcon: 'espacamentoIcon',
+                letterSpacing: 'letterSpacing',
+                gifFrames: 'gifFrames', gifDelay: 'gifDelay', gifMovement: 'gifMovement'
+            };
+            Object.keys(mapeamento).forEach(id => {
+                const range = document.getElementById(id);
+                const prop = mapeamento[id];
+                if (range) {
+                    range.value = modelo[prop];
+                    const display = document.getElementById(id + 'Val');
+                    if (display) display.textContent = modelo[prop];
+                    const num = document.getElementById(id + 'Num');
+                    if (num) num.value = modelo[prop];
+                }
+            });
+            const toggleAnuncio = document.getElementById('toggleAnuncio');
+            if (toggleAnuncio) toggleAnuncio.checked = true;
+            resetarPosicoes();
+            document.querySelectorAll('.format-btn-small').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.format === 'png');
+            });
+            atualizarPreview();
+            showToast('🔄 Modelo resetado para os valores padrão!', 'info');
+        }
+
+        function addContato() {
+            const nomeInput = document.getElementById('nome');
+            const cargoInput = document.getElementById('cargo');
+            const emailInput = document.getElementById('email');
+            const telefoneInput = document.getElementById('telefone');
+            const celularInput = document.getElementById('celular');
+            const semTelefoneCheckbox = document.getElementById('semTelefone');
+            autocompletarEmail(emailInput);
+            autocompletarTelefone(telefoneInput);
+            autocompletarCelular(celularInput);
+            if (!nomeInput.value.trim() || !emailInput.value.trim()) {
+                showToast('⚠️ Preencha pelo menos Nome e E-mail!', 'warning');
+                return;
+            }
+            const telefone = semTelefoneCheckbox.checked ? '' : telefoneInput.value.trim();
+            const semTelefone = semTelefoneCheckbox.checked;
+            contatos.push({
+                nome: capitalizarNome(nomeInput.value.trim()),
+                cargo: cargoInput.value.trim().toUpperCase(),
+                email: emailInput.value.trim().toLowerCase(),
+                telefone: telefone,
+                celular: celularInput.value.trim(),
+                semTelefone: semTelefone
+            });
+            nomeInput.value = '';
+            cargoInput.value = '';
+            emailInput.value = '';
+            telefoneInput.value = '';
+            celularInput.value = '';
+            semTelefoneCheckbox.checked = false;
+            emailInput.classList.remove('autocompletado');
+            telefoneInput.classList.remove('autocompletado-telefone');
+            renderLista();
+            atualizarPreview();
+            showToast('✅ Contato adicionado com sucesso!', 'success');
+        }
+
+        function renderLista() {
+            const lista = document.getElementById('lista');
+            lista.innerHTML = '';
+            contatos.forEach((c, index) => {
+                lista.innerHTML += `
+                            <tr>
+                                <td><strong>${c.nome}</strong></td>
+                                <td style="text-transform:uppercase;">${c.cargo}</td>
+                                <td style="text-transform:lowercase;">${c.email}</td>
+                                <td>${c.semTelefone ? '❌ Sem telefone' : (c.telefone || '-')}</td>
+                                <td>${c.celular || '-'}</td>
+                                <td style="text-align:center;">
+                                    <button onclick="removerContato(${index})" style="padding:3px 10px;background:#e74c3c;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;transition:all 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">✕</button>
+                                </td>
+                            </tr>`;
+            });
+            document.getElementById('contatosBadge').textContent = contatos.length + ' contatos';
+        }
+
+        function removerContato(index) {
+            contatos.splice(index, 1);
+            renderLista();
+            atualizarPreview();
+            showToast('Contato removido', 'info');
+        }
+
+        function limparTudo() {
+            if (contatos.length === 0) return;
+            if (confirm('⚠️ Tem certeza que deseja limpar todos os contatos?')) {
+                contatos = [];
+                renderLista();
+                document.getElementById('assinaturas').innerHTML = '';
+                atualizarPreview();
+                showToast('Todos os contatos removidos', 'info');
+            }
+        }
+
+        function importarCSV() { document.getElementById('csvFileInput').click(); }
+
+        function processarCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const conteudo = e.target.result;
+                    const linhas = conteudo.split('\n').filter(linha => linha.trim() !== '');
+                    let separador = ';';
+                    if (conteudo.includes('\t')) separador = '\t';
+                    else if (conteudo.includes(',')) {
+                        const cpv = (conteudo.match(/;/g) || []).length;
+                        const cv = (conteudo.match(/,/g) || []).length;
+                        separador = cpv >= cv ? ';' : ',';
+                    }
+                    let inicio = 0;
+                    const pl = linhas[0].toLowerCase();
+                    if (pl.includes('nome') || pl.includes('cargo') || pl.includes('email') || pl.includes('telefone') || pl.includes('celular')) inicio = 1;
+                    let adicionados = 0;
+                    for (let i = inicio; i < linhas.length; i++) {
+                        const colunas = linhas[i].split(separador).map(col => col.trim().replace(/^"|"$/g, ''));
+                        if (colunas.length >= 2 && colunas[0] && colunas[2]) {
+                            const nome = capitalizarNome(colunas[0] || '');
+                            const cargo = colunas[1] || '';
+                            let email = colunas[2] || '';
+                            let telefone = colunas[3] || '';
+                            let celular = colunas[4] || '';
+                            if (email && !email.includes('@') && !email.includes(' ')) email = email + DOMAIN;
+                            if (telefone) {
+                                const num = telefone.replace(/\D/g, '');
+                                if (/^\d{10,11}$/.test(num)) {
+                                    if (num.length === 11) telefone = `(${num.substring(0,2)}) ${num.substring(2,7)}-${num.substring(7)}`;
+                                    else telefone = `(${num.substring(0,2)}) ${num.substring(2,6)}-${num.substring(6)}`;
+                                } else if (/^\d{3,5}$/.test(num)) {
+                                    telefone = TELEFONE_PREFIXO + (num.startsWith('3301') ? num.substring(4) : num);
+                                }
+                            }
+                            if (celular) {
+                                const num = celular.replace(/\D/g, '');
+                                if (/^\d{10,11}$/.test(num)) {
+                                    if (num.length === 11) celular = `(${num.substring(0,2)}) ${num.substring(2,7)}-${num.substring(7)}`;
+                                    else celular = `(${num.substring(0,2)}) ${num.substring(2,6)}-${num.substring(6)}`;
+                                }
+                            }
+                            if (nome && email) {
+                                contatos.push({
+                                    nome, cargo: cargo.toUpperCase(),
+                                    email: email.toLowerCase(),
+                                    telefone: telefone || '', celular: celular || '',
+                                    semTelefone: false
+                                });
+                                adicionados++;
+                            }
+                        }
+                    }
+                    document.getElementById('csvFileInput').value = '';
+                    renderLista();
+                    atualizarPreview();
+                    showToast(`✅ Importação concluída! ${adicionados} contatos adicionados`, 'success');
+                } catch (err) {
+                    showToast('❌ Erro ao processar o arquivo CSV: ' + err.message, 'error');
+                }
+            };
+            reader.onerror = function() { showToast('❌ Erro ao ler o arquivo.', 'error'); };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        window.onload = function() {
+            try {
+                const saved = localStorage.getItem('modeloAssinatura');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.modelo) {
+                        modelo = { ...modelo, ...parsed.modelo };
+                        gifLogoSelecionado = modelo.gifLogoSelecionado || '';
+                        gifAnuncioSelecionado = modelo.gifAnuncioSelecionado || '';
+                    }
+                    if (parsed.posicoes) posicoesElementos = parsed.posicoes;
+                }
+            } catch (e) {}
+            contatos.push({
+                nome: capitalizarNome('Amailson Gawlinski'),
+                cargo: 'ASSISTENTE DE SUPORTE',
+                email: 'agawlinski' + DOMAIN,
+                telefone: TELEFONE_PREFIXO + '3161',
+                celular: '(51) 99999-9999',
+                semTelefone: false
+            });
+            carregarListaGIFs();
+            modelo.formatoLogo = modelo.formatoLogo || 'png';
+            modelo.formatoAnuncio = modelo.formatoAnuncio || 'png';
+            selecionarFormatoImagem('logo', modelo.formatoLogo);
+            selecionarFormatoImagem('anuncio', modelo.formatoAnuncio);
+            configurarControles();
+            renderLista();
+            atualizarPreview();
+            const toggleAnuncio = document.getElementById('toggleAnuncio');
+            if (toggleAnuncio) toggleAnuncio.checked = modelo.mostrarAnuncio !== false;
+            atualizarStatusAnuncio();
+            const emailInput = document.getElementById('email');
+            const telefoneInput = document.getElementById('telefone');
+            const celularInput = document.getElementById('celular');
+            if (emailInput) {
+                emailInput.addEventListener('blur', function() { autocompletarEmail(this); });
+                emailInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === 'Tab') autocompletarEmail(this);
+                });
+            }
+            if (telefoneInput) {
+                telefoneInput.addEventListener('blur', function() { autocompletarTelefone(this); });
+                telefoneInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === 'Tab') autocompletarTelefone(this);
+                });
+            }
+            if (celularInput) {
+                celularInput.addEventListener('blur', function() { autocompletarCelular(this); });
+                celularInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === 'Tab') autocompletarCelular(this);
+                });
+            }
+            const mapeamento = {
+                sigWidth: 'largura', sigHeight: 'altura',
+                logoWidth: 'logoLargura', logoHeight: 'logoAltura',
+                anuncioWidth: 'anuncioLargura', anuncioHeight: 'anuncioAltura',
+                fontNome: 'fonteNome', fontCargo: 'fonteCargo', fontContato: 'fonteContato',
+                iconSize: 'iconTamanho', iconFont: 'iconFonte',
+                spacingLogo: 'espacamentoLogo', spacingAnuncio: 'espacamentoAnuncio',
+                spacingContato: 'espacamentoContato', spacingIcon: 'espacamentoIcon',
+                letterSpacing: 'letterSpacing',
+                gifFrames: 'gifFrames', gifDelay: 'gifDelay', gifMovement: 'gifMovement'
+            };
+            Object.keys(mapeamento).forEach(id => {
+                const range = document.getElementById(id);
+                const prop = mapeamento[id];
+                if (range) {
+                    range.value = modelo[prop] !== undefined ? modelo[prop] : range.value;
+                    const display = document.getElementById(id + 'Val');
+                    if (display) display.textContent = range.value;
+                    const num = document.getElementById(id + 'Num');
+                    if (num) num.value = range.value;
+                }
+            });
+            showToast('Editor carregado!', 'info');
+        };
+    </script>
+</body>
+</html>
